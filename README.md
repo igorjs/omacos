@@ -16,7 +16,7 @@ OmacOS applies that idea to a Mac dev environment: rather than making you pick e
 
 ## Prerequisites
 
-- A Mac running macOS Tahoe (15) or later
+- A Mac running macOS Sequoia (15) or later
 - An internet connection
 - That's it
 
@@ -90,7 +90,7 @@ After the installer finishes, a few things require manual action:
 
 4. **Zed: Tokyo Night extension**: Open Zed, press Cmd+Shift+X, search "Tokyo Night", install the extension.
 
-5. **macOS Tahoe appearance tweaks**: System Settings > Appearance lets you set Icon Style and Folder Color. These settings have no stable scriptable defaults keys, so they require manual selection.
+5. **macOS Sequoia appearance tweaks**: System Settings > Appearance lets you set Icon Style and Folder Color. These settings have no stable scriptable defaults keys, so they require manual selection.
 
 6. **Restart your shell**: Open a new terminal window, or run `source ~/.zshrc`.
 
@@ -215,13 +215,23 @@ mise installs Rust via rustup. The rust-analyzer component is included, so it wo
 
 ---
 
+## Known Quirks
+
+- **TPM plugin install focus**: After pressing `prefix+I` to install tmux plugins, the "Done, press ENTER" screen requires a mouse click before Enter works. This is a macOS window-focus edge case triggered by TPM's install overlay. It only happens during plugin installation (once per machine).
+
+- **security.sh requires sudo**: `macos/security.sh` (firewall, SSH, mDNS) needs `sudo`. If running in a non-interactive context where sudo isn't pre-authenticated, it will prompt. Run `sudo -v` first or execute it manually: `bash macos/security.sh`.
+
+- **Safari privacy defaults**: macOS sandboxes Safari's preferences. The `SendDoNotTrackHTTPHeader` default can only be written after Safari has been opened at least once. The installer silently skips it otherwise.
+
+---
+
 ## Honest macOS Limits
 
 A few things cannot be fully scripted on macOS:
 
 - **Accent color** is capped at 8 Apple presets. There is no stable way to set an arbitrary hex color as the system accent. `defaults write -g AppleAccentColor -int 5` sets "Purple" (closest to Tokyo Night's `#bb9af7`).
 
-- **Tahoe Icon Style and Folder Color** have no stable scriptable defaults keys as of this writing. Set them in System Settings > Appearance.
+- **Sequoia Icon Style and Folder Color** have no stable scriptable defaults keys as of this writing. Set them in System Settings > Appearance.
 
 - **Window chrome** (titlebars, traffic lights) cannot be arbitrarily themed system-wide. Individual apps like Ghostty use `window-decoration = false` to hide their chrome.
 

@@ -45,6 +45,9 @@ block_body() {
 export EDITOR="zed --wait"
 export VISUAL="\$EDITOR"
 
+# Disable XON/XOFF flow control so Ctrl+S is available for history search.
+stty -ixon 2>/dev/null || true
+
 # 1. mise: language version manager (Node/Python/Go/Rust via rustup)
 if command -v mise >/dev/null 2>&1; then
   eval "\$(mise activate zsh)"

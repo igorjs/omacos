@@ -144,9 +144,9 @@ if [[ -d "$TPM_DIR/.git" ]]; then
   ok "TPM already installed"
 else
   info "Cloning TPM into $TPM_DIR"
-  git clone --depth=1 https://github.com/tmux-plugins/tpm "$TPM_DIR"
-  ok "TPM installed (open tmux and press prefix+I to install plugins)"
-  add_manual "In tmux: press prefix+I (Ctrl-a then Shift-i) to install resurrect and continuum"
+  mkdir -p "$HOME/.tmux/plugins"
+  git clone --quiet --depth=1 https://github.com/tmux-plugins/tpm "$TPM_DIR"
+  ok "TPM installed"
 fi
 
 # --- 5. Languages (mise + uv) -----------------------------------------------
