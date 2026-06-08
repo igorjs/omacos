@@ -1,0 +1,26 @@
+# Sample dev services. Copy this to your project directory.
+# Usage:
+#   docker compose -f docker/compose.dev.yml up -d   # start
+#   docker compose -f docker/compose.dev.yml down    # stop
+# Requires Docker Desktop to be running.
+# Docker is for services (databases, queues), not language runtimes (use mise for those).
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: dev
+      POSTGRES_DB: dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+volumes:
+  pgdata:

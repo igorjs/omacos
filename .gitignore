@@ -1,0 +1,4 @@
+*.bak.*
+.DS_Store
+~/.mac-snapshots/
+~/.mac-exports/

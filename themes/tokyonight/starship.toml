@@ -1,0 +1,13 @@
+# Tokyo Night palette block for Starship.
+# Concatenated onto config/starship.toml by `omacos theme set tokyonight`.
+# New themes ship only their own palette block using the same color names.
+
+[palettes.active]
+blue   = "#7aa2f7"
+cyan   = "#7dcfff"
+green  = "#9ece6a"
+red    = "#f7768e"
+yellow = "#e0af68"
+purple = "#bb9af7"
+fg     = "#c0caf5"
+muted  = "#565f89"

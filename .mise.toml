@@ -1,0 +1,15 @@
+# Sample per-project mise config. Copy to your project root.
+# mise auto-activates these versions on 'cd' into the directory.
+# If a rust-toolchain.toml is present, it takes precedence over the rust entry here.
+
+[tools]
+node = "lts"
+python = "latest"
+go = "latest"
+rust = { version = "stable", components = "rustfmt,clippy,rust-analyzer,rust-src", targets = "wasm32-unknown-unknown" }
+
+[env]
+# Project-scoped env vars live here (replaces direnv for most cases)
+
+[tasks.dev]
+run = "echo 'define project tasks here'"

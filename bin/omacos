@@ -1,0 +1,406 @@
+#!/usr/bin/env bash
+#
+# OmacOS CLI: theme switching, update, snapshot, doctor.
+#
+set -euo pipefail
+
+# --- Tokyo Night colors ------------------------------------------------------
+BLUE='\033[38;2;122;162;247m'
+PURPLE='\033[38;2;187;154;247m'
+GREEN='\033[38;2;158;206;106m'
+RED='\033[38;2;247;118;142m'
+DIM='\033[38;2;86;95;137m'
+BOLD='\033[1m'
+RESET='\033[0m'
+info(){ printf "${BLUE}==>${RESET} %s\n" "$1"; }
+ok(){   printf "${GREEN} ok${RESET} %s\n" "$1"; }
+fail(){ printf "${RED} !! ${RESET}%s\n" "$1"; }
+note(){ printf "${PURPLE} -- ${RESET}%s\n" "$1"; }
+
+# --- Locate the OmacOS repo --------------------------------------------------
+find_root() {
+  if [[ -n "${OMACOS_ROOT:-}" && -d "$OMACOS_ROOT" ]]; then
+    echo "$OMACOS_ROOT"; return
+  fi
+  if [[ -f "$HOME/.config/omacos/root" ]]; then
+    local r; r="$(cat "$HOME/.config/omacos/root")"
+    if [[ -d "$r" ]]; then echo "$r"; return; fi
+  fi
+  local self; self="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+  if [[ -d "$self/themes" ]]; then echo "$self"; return; fi
+  fail "Cannot locate OmacOS repo. Set OMACOS_ROOT or run install.sh first."
+  exit 1
+}
+
+OMACOS_ROOT="$(find_root)"
+STATE_DIR="$HOME/.config/omacos"
+mkdir -p "$STATE_DIR"
+
+TS() { date +%Y%m%d-%H%M%S; }
+
+# --- json merge: keys in $1 override $target, others preserved ---------------
+json_merge() {
+  local overlay="$1" target="$2"
+  if [[ ! -f "$target" ]]; then
+    mkdir -p "$(dirname "$target")"
+    cp "$overlay" "$target"
+    return
+  fi
+  cp "$target" "$target.bak.$(TS)"
+  python3 - "$overlay" "$target" <<'PY'
+import json, sys
+overlay_path, target_path = sys.argv[1], sys.argv[2]
+def load(p):
+    try:
+        with open(p) as f: return json.load(f)
+    except Exception:
+        return {}
+o = load(overlay_path)
+t = load(target_path)
+if not isinstance(t, dict): t = {}
+if not isinstance(o, dict): o = {}
+t.update(o)
+with open(target_path, 'w') as f:
+    json.dump(t, f, indent=2)
+    f.write("\n")
+PY
+}
+
+# --- theme list / set --------------------------------------------------------
+cmd_theme_list() {
+  info "Available themes (in $OMACOS_ROOT/themes):"
+  if [[ -d "$OMACOS_ROOT/themes" ]]; then
+    local current=""
+    [[ -f "$STATE_DIR/current_theme" ]] && current="$(cat "$STATE_DIR/current_theme")"
+    for d in "$OMACOS_ROOT/themes"/*/; do
+      [[ -d "$d" ]] || continue
+      local name; name="$(basename "$d")"
+      if [[ "$name" == "$current" ]]; then
+        printf "  ${PURPLE}* %s${RESET} ${DIM}(active)${RESET}\n" "$name"
+      else
+        printf "    %s\n" "$name"
+      fi
+    done
+  fi
+}
+
+cmd_theme_set() {
+  local name="${1:-}"
+  [[ -n "$name" ]] || { fail "usage: omacos theme set <name>"; exit 2; }
+  local td="$OMACOS_ROOT/themes/$name"
+  [[ -d "$td" ]] || { fail "Unknown theme: $name"; exit 1; }
+  info "Applying theme: $name"
+
+  # 1. Ghostty: write theme.conf next to the actual config file Ghostty reads.
+  # On macOS, Ghostty reads ~/Library/Application Support/com.mitchellh.ghostty/config.ghostty.
+  # config-file paths are resolved relative to that directory.
+  if [[ -f "$td/ghostty.conf" ]]; then
+    local gh_dir="$HOME/Library/Application Support/com.mitchellh.ghostty"
+    mkdir -p "$gh_dir"
+    cp "$td/ghostty.conf" "$gh_dir/theme.conf"
+    ok "Ghostty theme overlay written: $gh_dir/theme.conf"
+  fi
+
+  # 2. tmux: copy themes/<name>/tmux.conf to ~/.config/tmux/theme.conf and reload.
+  if [[ -f "$td/tmux.conf" ]]; then
+    mkdir -p "$HOME/.config/tmux"
+    cp "$td/tmux.conf" "$HOME/.config/tmux/theme.conf"
+    if command -v tmux >/dev/null 2>&1 && tmux list-sessions >/dev/null 2>&1; then
+      tmux source-file "$HOME/.tmux.conf" 2>/dev/null && ok "tmux reloaded" || ok "tmux theme written (reload manually with prefix + r)"
+    else
+      ok "tmux theme written (no running session to reload)"
+    fi
+  fi
+
+  # 3. Zed: merge themes/<name>/zed.json into ~/.config/zed/settings.json.
+  if [[ -f "$td/zed.json" ]]; then
+    json_merge "$td/zed.json" "$HOME/.config/zed/settings.json"
+    ok "Zed settings merged (theme key)"
+  fi
+
+  # 4. Starship: concat config/starship.toml + themes/<name>/starship.toml.
+  if [[ -f "$td/starship.toml" && -f "$OMACOS_ROOT/config/starship.toml" ]]; then
+    mkdir -p "$HOME/.config"
+    local sp="$HOME/.config/starship.toml"
+    [[ -f "$sp" ]] && cp "$sp" "$sp.bak.$(TS)"
+    {
+      cat "$OMACOS_ROOT/config/starship.toml"
+      printf "\n# --- palette (theme: %s) ---\n" "$name"
+      cat "$td/starship.toml"
+    } > "$sp"
+    ok "Starship config rebuilt ($sp)"
+  fi
+
+  # 5. Neovim: copy themes/<name>/nvim.lua to ~/.config/nvim/theme.lua.
+  # Takes effect on next nvim launch; we don't try to hot-reload running editors.
+  if [[ -f "$td/nvim.lua" ]]; then
+    mkdir -p "$HOME/.config/nvim"
+    cp "$td/nvim.lua" "$HOME/.config/nvim/theme.lua"
+    ok "Neovim colorscheme written (takes effect on next launch)"
+  fi
+
+  # 6. zsh: copy themes/<name>/zsh.zsh to ~/.config/omacos/theme.zsh.
+  # The managed block in ~/.zshrc sources this; takes effect in new shells.
+  if [[ -f "$td/zsh.zsh" ]]; then
+    cp "$td/zsh.zsh" "$STATE_DIR/theme.zsh"
+    ok "Shell color overlay written (takes effect in new shells)"
+  fi
+
+  # 7. macOS theme overlay (accent, highlight, wallpaper, MANUAL hints).
+  if [[ -x "$td/macos.sh" ]]; then
+    "$td/macos.sh"
+  elif [[ -f "$td/macos.sh" ]]; then
+    bash "$td/macos.sh"
+  fi
+
+  # 8. Remember active theme.
+  echo "$name" > "$STATE_DIR/current_theme"
+  ok "Active theme: $name"
+}
+
+# --- update ------------------------------------------------------------------
+cmd_update() {
+  if command -v brew >/dev/null 2>&1; then
+    info "brew update && brew bundle"
+    brew update
+    brew bundle --file="$OMACOS_ROOT/Brewfile"
+  else
+    fail "brew not on PATH"
+  fi
+
+  if command -v mise >/dev/null 2>&1; then
+    info "mise upgrade (Node/Python/Go/Rust)"
+    mise upgrade 2>/dev/null || note "mise upgrade had warnings; check 'mise current'"
+  fi
+
+  if command -v nvim >/dev/null 2>&1; then
+    info "nvim Lazy sync"
+    nvim --headless "+Lazy! sync" +qa 2>/dev/null || note "Lazy sync had warnings"
+  fi
+
+  info "Updating Claude Code"
+  if command -v claude >/dev/null 2>&1; then
+    claude update >/dev/null 2>&1 || curl -fsSL https://claude.ai/install.sh | bash || true
+  else
+    curl -fsSL https://claude.ai/install.sh | bash || true
+  fi
+  ok "Claude Code update attempted"
+
+  local current="tokyonight"
+  [[ -f "$STATE_DIR/current_theme" ]] && current="$(cat "$STATE_DIR/current_theme")"
+  cmd_theme_set "$current"
+}
+
+# --- snapshot / export wrappers ---------------------------------------------
+cmd_snapshot() { bash "$OMACOS_ROOT/tools/mac-snapshot.sh" snapshot "$@"; }
+cmd_export()   { bash "$OMACOS_ROOT/tools/mac-snapshot.sh" export   "$@"; }
+
+# --- doctor ------------------------------------------------------------------
+check() {
+  local desc="$1"; shift
+  if "$@" >/dev/null 2>&1; then
+    printf "  ${GREEN}ok${RESET}    %s\n" "$desc"
+  else
+    printf "  ${RED}fail${RESET}  %s\n" "$desc"
+  fi
+}
+
+check_warn() {
+  local desc="$1"; shift
+  if "$@" >/dev/null 2>&1; then
+    printf "  ${GREEN}ok${RESET}    %s\n" "$desc"
+  else
+    printf "  ${PURPLE}warn${RESET}  %s\n" "$desc"
+  fi
+}
+
+cmd_doctor() {
+  printf "\n${BOLD}${PURPLE}OmacOS doctor${RESET}\n\n"
+
+  printf "${DIM}# Prereqs${RESET}\n"
+  check "Xcode CLT path resolves" /usr/bin/xcode-select -p
+  if [[ "$(uname -m)" == "arm64" ]]; then
+    check "Rosetta 2 present (arm64)" /usr/bin/pgrep -q oahd
+  else
+    printf "  ${DIM}skip${RESET}  Rosetta (Intel host)\n"
+  fi
+
+  printf "\n${DIM}# Binaries${RESET}\n"
+  check "brew"     command -v brew
+  check "git"      command -v git
+  check "gh"       command -v gh
+  check "tmux"     command -v tmux
+  check "starship" command -v starship
+  check "mise"     command -v mise
+  check "uv"       command -v uv
+  check "nvim"     command -v nvim
+  check "ripgrep (rg)" command -v rg
+  check "fd"       command -v fd
+  check "fzf"      command -v fzf
+  check "jq"       command -v jq
+  check "bat"      command -v bat
+  check "eza"      command -v eza
+  check "zoxide"   command -v zoxide
+  check "lazygit"  command -v lazygit
+  check "mas"      command -v mas
+  check "aerospace" command -v aerospace
+  check "claude"   command -v claude
+  check "ghostty (app)" test -d "/Applications/Ghostty.app"
+  check "zed (app)"     test -d "/Applications/Zed.app"
+  check "docker (app)"  test -d "/Applications/Docker.app"
+
+  printf "\n${DIM}# Language runtimes (via mise)${RESET}\n"
+  if command -v mise >/dev/null 2>&1; then
+    for tool in node python go rust; do
+      if mise which "$tool" >/dev/null 2>&1 || mise current "$tool" >/dev/null 2>&1; then
+        printf "  ${GREEN}ok${RESET}    %s resolves through mise\n" "$tool"
+      else
+        printf "  ${RED}fail${RESET}  %s not installed via mise\n" "$tool"
+      fi
+    done
+    # Rust: confirm rustup is mise-driven
+    if command -v rustup >/dev/null 2>&1 && rustup show >/dev/null 2>&1; then
+      printf "  ${GREEN}ok${RESET}    rustup reachable (mise drives it)\n"
+    else
+      printf "  ${PURPLE}warn${RESET}  rustup not yet present; first 'rustc' should install it via mise\n"
+    fi
+  else
+    printf "  ${RED}fail${RESET}  mise not installed; cannot check runtimes\n"
+  fi
+
+  printf "\n${DIM}# Neovim${RESET}\n"
+  if command -v nvim >/dev/null 2>&1; then
+    local nvim_v; nvim_v="$(nvim --version | head -1 | awk '{print $2}')"
+    printf "  ${GREEN}ok${RESET}    nvim version: %s\n" "$nvim_v"
+    # 0.11+ check
+    if nvim --headless -c 'lua if vim.fn.has("nvim-0.11")==1 then os.exit(0) else os.exit(1) end' -c 'q' 2>/dev/null; then
+      printf "  ${GREEN}ok${RESET}    nvim is 0.11+ (native vim.lsp.enable)\n"
+    else
+      printf "  ${RED}fail${RESET}  nvim is older than 0.11; LSP config will not load\n"
+    fi
+    if nvim --headless "+q" 2>/dev/null; then
+      printf "  ${GREEN}ok${RESET}    nvim config loads without error\n"
+    else
+      printf "  ${RED}fail${RESET}  nvim config errored on load (try: nvim --headless '+q')\n"
+    fi
+  fi
+
+  printf "\n${DIM}# Configs${RESET}\n"
+  check "ghostty config"          test -f "$HOME/.config/ghostty/config"
+  check "ghostty theme overlay"   test "$(find "$OMACOS_ROOT/config" "$HOME/.config/ghostty" -name theme.conf 2>/dev/null | wc -l)" -gt 0
+  check "tmux base config"        test -f "$HOME/.tmux.conf"
+  check "tmux theme overlay"      test -f "$HOME/.config/tmux/theme.conf"
+  check "aerospace config"        test -f "$HOME/.config/aerospace/aerospace.toml"
+  check "zed settings"            test -f "$HOME/.config/zed/settings.json"
+  check "starship config"         test -f "$HOME/.config/starship.toml"
+  check "nvim init.lua"           test -f "$HOME/.config/nvim/init.lua"
+  check "nvim theme overlay"      test -f "$HOME/.config/nvim/theme.lua"
+  check "zsh theme overlay"       test -f "$STATE_DIR/theme.zsh"
+
+  printf "\n${DIM}# Shell wiring${RESET}\n"
+  if grep -qsF '# >>> omacos starship >>>' "$HOME/.zshrc"; then
+    printf "  ${GREEN}ok${RESET}    OmacOS managed block present in ~/.zshrc\n"
+    grep -qsF 'mise activate' "$HOME/.zshrc"            && printf "  ${GREEN}ok${RESET}    mise activate in managed block\n"          || printf "  ${RED}fail${RESET}  mise activate missing\n"
+    grep -qsF 'zsh-autosuggestions' "$HOME/.zshrc"      && printf "  ${GREEN}ok${RESET}    zsh-autosuggestions sourced\n"             || printf "  ${RED}fail${RESET}  zsh-autosuggestions not sourced\n"
+    grep -qsF 'starship init' "$HOME/.zshrc"            && printf "  ${GREEN}ok${RESET}    starship init in managed block\n"          || printf "  ${RED}fail${RESET}  starship init missing\n"
+    grep -qsF 'zsh-syntax-highlighting' "$HOME/.zshrc"  && printf "  ${GREEN}ok${RESET}    zsh-syntax-highlighting sourced\n"         || printf "  ${RED}fail${RESET}  zsh-syntax-highlighting not sourced\n"
+  else
+    printf "  ${RED}fail${RESET}  OmacOS managed block missing in ~/.zshrc\n"
+  fi
+  if [[ "${EDITOR:-}" == "zed --wait" ]]; then
+    printf "  ${GREEN}ok${RESET}    EDITOR=zed --wait (Zed is default)\n"
+  elif [[ -n "${EDITOR:-}" ]]; then
+    printf "  ${PURPLE}warn${RESET}  EDITOR=%s (expected 'zed --wait'; check managed block)\n" "$EDITOR"
+  else
+    printf "  ${RED}fail${RESET}  EDITOR not set; source ~/.zshrc or open a new shell\n"
+  fi
+  if command -v nvim >/dev/null 2>&1; then
+    printf "  ${GREEN}ok${RESET}    nvim available as terminal fallback editor\n"
+  else
+    printf "  ${RED}fail${RESET}  nvim not on PATH\n"
+  fi
+
+  printf "\n${DIM}# Git + GitHub${RESET}\n"
+  if [[ -n "$(git config --global --get user.name 2>/dev/null)" ]]; then
+    printf "  ${GREEN}ok${RESET}    git user.name set\n"
+  else
+    printf "  ${RED}fail${RESET}  git user.name not set\n"
+  fi
+  if [[ -n "$(git config --global --get user.email 2>/dev/null)" ]]; then
+    printf "  ${GREEN}ok${RESET}    git user.email set\n"
+  else
+    printf "  ${RED}fail${RESET}  git user.email not set\n"
+  fi
+  if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
+    printf "  ${GREEN}ok${RESET}    gh authenticated\n"
+  else
+    printf "  ${PURPLE}warn${RESET}  gh not authenticated; run 'gh auth login'\n"
+  fi
+
+  printf "\n${DIM}# Theme names${RESET}\n"
+  if command -v ghostty >/dev/null 2>&1; then
+    if ghostty +list-themes 2>/dev/null | grep -qi 'tokyo'; then
+      printf "  ${GREEN}ok${RESET}    Ghostty has a TokyoNight theme bundled\n"
+    else
+      printf "  ${RED}fail${RESET}  No bundled TokyoNight theme in Ghostty\n"
+    fi
+  else
+    printf "  ${PURPLE}skip${RESET}  ghostty CLI not on PATH\n"
+  fi
+  if [[ -f "$HOME/.config/zed/settings.json" ]] && grep -q '"theme"' "$HOME/.config/zed/settings.json"; then
+    printf "  ${GREEN}ok${RESET}    Zed settings.json has a theme key\n"
+    note "Tokyo Night is NOT built into Zed. Cmd+Shift+P > 'zed: extensions' > install 'Tokyo Night Themes' if missing."
+  fi
+
+  printf "\n${DIM}# Fonts${RESET}\n"
+  if /usr/bin/system_profiler SPFontsDataType 2>/dev/null | grep -qi 'JetBrainsMono Nerd'; then
+    printf "  ${GREEN}ok${RESET}    JetBrainsMono Nerd Font installed\n"
+  else
+    printf "  ${PURPLE}warn${RESET}  Could not confirm JetBrainsMono Nerd Font\n"
+  fi
+
+  printf "\n${DIM}# Permissions${RESET}\n"
+  printf "  ${PURPLE}MANUAL${RESET} Verify AeroSpace Accessibility access:\n"
+  printf "          System Settings > Privacy and Security > Accessibility > AeroSpace\n"
+
+  printf "\n${DIM}# Active theme${RESET}\n"
+  if [[ -f "$STATE_DIR/current_theme" ]]; then
+    printf "  active theme: ${PURPLE}%s${RESET}\n" "$(cat "$STATE_DIR/current_theme")"
+  else
+    printf "  ${PURPLE}warn${RESET}  no theme set; run 'omacos theme set tokyonight'\n"
+  fi
+  echo
+}
+
+usage() {
+  cat <<USAGE
+OmacOS: opinionated, theme-able macOS setup
+
+Usage:
+  omacos theme list                 List available themes
+  omacos theme set <name>           Switch to a theme and reload apps
+  omacos update                     brew update + bundle, mise + nvim + Claude, re-apply theme
+  omacos snapshot [label]           Snapshot macOS defaults
+  omacos export [dir]               Export Brewfile + defaults + restore.sh
+  omacos doctor                     Check that everything is in place
+USAGE
+}
+
+# --- dispatch ----------------------------------------------------------------
+cmd="${1:-}"; shift || true
+case "$cmd" in
+  theme)
+    sub="${1:-}"; shift || true
+    case "$sub" in
+      list) cmd_theme_list ;;
+      set)  cmd_theme_set "${1:-}" ;;
+      *)    usage; exit 2 ;;
+    esac
+    ;;
+  update)   cmd_update ;;
+  snapshot) cmd_snapshot "$@" ;;
+  export)   cmd_export "$@" ;;
+  doctor)   cmd_doctor ;;
+  ""|-h|--help|help) usage ;;
+  *) usage; exit 2 ;;
+esac
