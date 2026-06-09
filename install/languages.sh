@@ -42,7 +42,6 @@ declare -a tools=(
   "node@lts"
   "python@latest"
   "go@latest"
-  "uv@latest"
   "rust@stable"
 )
 

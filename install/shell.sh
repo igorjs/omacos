@@ -102,9 +102,9 @@ if grep -qsF "$open_marker" "$zshrc"; then
   ts="$(date +%Y%m%d-%H%M%S)"
   cp "$zshrc" "$zshrc.bak.$ts"
   # Strip the existing block (markers inclusive)
-  awk -v open="$open_marker" -v close="$close_marker" '
+  awk -v open="$open_marker" -v stop="$close_marker" '
     $0 == open { skip = 1; next }
-    $0 == close && skip { skip = 0; next }
+    $0 == stop && skip { skip = 0; next }
     !skip
   ' "$zshrc.bak.$ts" > "$zshrc"
   write_block

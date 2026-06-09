@@ -1,5 +1,5 @@
 # Taps
-tap "homebrew/cask-fonts"
+tap "nikitabobko/tap"
 
 # Core tools
 brew "git"
@@ -31,7 +31,7 @@ brew "neovim"
 brew "tree-sitter"
 
 # Casks
-cask "aerospace"
+cask "nikitabobko/tap/aerospace"
 cask "ghostty"
 cask "zed"
 cask "docker"
