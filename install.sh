@@ -176,7 +176,7 @@ add_manual "Open Docker Desktop once to finish setup"
 # --- 10. Configs -------------------------------------------------------------
 step "Configs (${LINK_MODE})"
 link_or_copy "$OMACOS_ROOT/config/aerospace.toml"     "$HOME/.config/aerospace/aerospace.toml"
-link_or_copy "$OMACOS_ROOT/config/ghostty.config"     "$HOME/Library/Application Support/com.mitchellh.ghostty/config.ghostty"
+link_or_copy "$OMACOS_ROOT/config/ghostty.config"     "$HOME/.config/ghostty/config"
 link_or_copy "$OMACOS_ROOT/config/tmux.conf"          "$HOME/.tmux.conf"
 link_or_copy "$OMACOS_ROOT/config/nvim"               "$HOME/.config/nvim"
 

@@ -91,11 +91,11 @@ cmd_theme_set() {
   [[ -d "$td" ]] || { fail "Unknown theme: $name"; exit 1; }
   info "Applying theme: $name"
 
-  # 1. Ghostty: write theme.conf next to the actual config file Ghostty reads.
-  # On macOS, Ghostty reads ~/Library/Application Support/com.mitchellh.ghostty/config.ghostty.
-  # config-file paths are resolved relative to that directory.
+  # 1. Ghostty: write theme.conf next to the config file (~/.config/ghostty/config).
+  # config-file paths are resolved relative to the directory of the file that
+  # declares them, so theme.conf must live in ~/.config/ghostty/.
   if [[ -f "$td/ghostty.conf" ]]; then
-    local gh_dir="$HOME/Library/Application Support/com.mitchellh.ghostty"
+    local gh_dir="$HOME/.config/ghostty"
     mkdir -p "$gh_dir"
     cp "$td/ghostty.conf" "$gh_dir/theme.conf"
     ok "Ghostty theme overlay written: $gh_dir/theme.conf"
@@ -237,7 +237,7 @@ warn_count() {
 
 cmd_doctor() {
   FAILS=0; WARNS=0
-  local GH_DIR="$HOME/Library/Application Support/com.mitchellh.ghostty"
+  local GH_DIR="$HOME/.config/ghostty"
 
   printf "\n${BOLD}${PURPLE}OmacOS doctor${RESET}\n\n"
 
@@ -330,8 +330,8 @@ cmd_doctor() {
   check_count "tmux theme overlay"     test -f "$HOME/.config/tmux/theme.conf"
 
   printf "\n${DIM}# Configs${RESET}\n"
-  check_count "ghostty config (macOS Library path)" test -f "$GH_DIR/config.ghostty"
-  check_count "ghostty theme overlay"               test -f "$GH_DIR/theme.conf"
+  check_count "ghostty config"         test -f "$GH_DIR/config"
+  check_count "ghostty theme overlay"  test -f "$GH_DIR/theme.conf"
   check_count "aerospace config"       test -f "$HOME/.config/aerospace/aerospace.toml"
   check_count "zed settings"           test -f "$HOME/.config/zed/settings.json"
   check_count "starship config"        test -f "$HOME/.config/starship.toml"
@@ -343,7 +343,7 @@ cmd_doctor() {
   for pair in \
     "$HOME/.tmux.conf:$OMACOS_ROOT/config/tmux.conf" \
     "$HOME/.config/aerospace/aerospace.toml:$OMACOS_ROOT/config/aerospace.toml" \
-    "$GH_DIR/config.ghostty:$OMACOS_ROOT/config/ghostty.config"; do
+    "$GH_DIR/config:$OMACOS_ROOT/config/ghostty.config"; do
     local dst="${pair%%:*}" src="${pair##*:}"
     if [[ -L "$dst" && "$(readlink "$dst")" == "$src" ]]; then
       printf "  ${GREEN}ok${RESET}    symlink: %s -> repo\n" "$(basename "$dst")"
