@@ -22,6 +22,10 @@ brew "eza"
 brew "zoxide"
 brew "lazygit"
 
+# Security and auth
+brew "libfido2"
+brew "openssh"
+
 # Version manager and Python packaging
 brew "mise"
 brew "uv"
