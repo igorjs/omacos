@@ -34,6 +34,7 @@ set_if_unset init.defaultBranch       "main"
 set_if_unset pull.rebase              "true"
 set_if_unset push.autoSetupRemote     "true"
 set_if_unset core.editor              "zed --wait"
+set_if_unset gpg.ssh.program          "/opt/homebrew/bin/ssh-keygen"
 
 # --- Identity ---------------------------------------------------------------
 GIT_USER_NAME="${GIT_USER_NAME:-$(git config --global --get user.name 2>/dev/null || true)}"
