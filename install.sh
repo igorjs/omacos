@@ -45,6 +45,20 @@ if [[ "$(uname -s)" != "Darwin" ]]; then
   exit 1
 fi
 
+# --- Acquire sudo up front ---------------------------------------------------
+# Several later steps (Full Disk Access check, firewall, remote access, mDNS)
+# need root. Prompt for the password once here and keep the credential warm so
+# the rest of the install runs unattended instead of stalling mid-run.
+if ! sudo -n true 2>/dev/null; then
+  info "Some steps need administrator access. You'll be asked for your password once."
+fi
+sudo -v
+# Refresh the sudo timestamp every 60s until this script exits (covers long
+# steps like Homebrew and the Neovim bootstrap, and the FDA grant wait).
+( while true; do sudo -n true 2>/dev/null; sleep 60; kill -0 "$$" 2>/dev/null || exit; done ) &
+SUDO_KEEPALIVE_PID=$!
+trap 'kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true' EXIT
+
 # --- Full Disk Access pre-flight ---------------------------------------------
 # Some system commands (systemsetup, TCC writes) require the terminal app to
 # have Full Disk Access. We detect this early and open System Settings so the
@@ -221,8 +235,31 @@ if command -v nvim >/dev/null 2>&1; then
   info "Compiling tree-sitter parsers"
   nvim --headless "+TSUpdate" +qa 2>/dev/null || warn "TSUpdate had warnings (often benign)"
   info "Installing LSP servers via Mason"
-  nvim --headless "+MasonInstall basedpyright ruff vtsls gopls rust-analyzer lua-language-server bash-language-server" +qa 2>/dev/null \
-    || warn "Mason install had warnings; check ':checkhealth mason' in nvim"
+  # These pull from npm / pypi / the Go module proxy, which a VPN, proxy,
+  # firewall, or content filter can intermittently break (ENOTCONN, read
+  # timeouts). Mason installs in parallel, which makes flaky links worse, so
+  # retry a few times; a package is "installed" once it has a mason-receipt.
+  mason_servers=(basedpyright ruff vtsls gopls rust-analyzer lua-language-server bash-language-server)
+  mason_pkg_dir="$HOME/.local/share/nvim/mason/packages"
+  mason_missing=()
+  for attempt in 1 2 3; do
+    nvim --headless "+MasonInstall ${mason_servers[*]}" +qa >/dev/null 2>&1 || true
+    mason_missing=()
+    for s in "${mason_servers[@]}"; do
+      [[ -f "$mason_pkg_dir/$s/mason-receipt.json" ]] || mason_missing+=("$s")
+    done
+    [[ ${#mason_missing[@]} -eq 0 ]] && break
+    [[ $attempt -lt 3 ]] && { warn "Mason: retrying ${#mason_missing[@]} package(s): ${mason_missing[*]}"; sleep 3; }
+  done
+  if [[ ${#mason_missing[@]} -eq 0 ]]; then
+    ok "All LSP servers installed"
+  else
+    warn "Mason could not install: ${mason_missing[*]}"
+    warn "Usually a network issue (VPN, proxy, firewall, or content filter) blocking npm/pypi/go."
+    warn "Check your connection or allowlist registry.npmjs.org, pypi.org, proxy.golang.org, then re-run:"
+    warn "  nvim --headless \"+MasonInstall ${mason_missing[*]}\" +qa"
+    add_manual "Mason: finish LSP install after fixing network filtering: nvim --headless \"+MasonInstall ${mason_missing[*]}\" +qa"
+  fi
   ok "Neovim bootstrap finished"
 else
   warn "nvim not on PATH; skipping bootstrap"
@@ -231,12 +268,16 @@ fi
 # --- 11. macOS defaults ------------------------------------------------------
 step "macOS appearance, Dock, input, locale"
 bash "$OMACOS_ROOT/macos/appearance.sh"
+bash "$OMACOS_ROOT/macos/accessibility.sh"
 bash "$OMACOS_ROOT/macos/dock.sh"
+bash "$OMACOS_ROOT/macos/windows.sh"
 bash "$OMACOS_ROOT/macos/input.sh"
 bash "$OMACOS_ROOT/macos/locale.sh"
 bash "$OMACOS_ROOT/macos/defaults.sh"
 bash "$OMACOS_ROOT/macos/keyboard.sh"
+bash "$OMACOS_ROOT/macos/battery.sh"
 bash "$OMACOS_ROOT/macos/security.sh"
+bash "$OMACOS_ROOT/macos/safari.sh"
 
 # --- 12. Apply theme --------------------------------------------------------
 step "Theme"
@@ -249,6 +290,9 @@ add_manual "Open Zed once and install 'Tokyo Night Themes' (Cmd+Shift+P > zed: e
 add_manual "Appearance > Icon and Widget Style: Dark (or Tinted with blue/purple)"
 add_manual "Appearance > Folder Color: Purple"
 add_manual "If keyboard layout (US International) did not stick, set it manually in Keyboard > Text Input > Edit"
+add_manual "Grant Full Disk Access to your terminal (System Settings > Privacy & Security > Full Disk Access), then re-run: needed to write Accessibility (com.apple.universalaccess) settings"
+add_manual "Enroll Touch ID and set its toggles: System Settings > Touch ID & Password (biometric, not scriptable)"
+add_manual "Spotlight > Results from Apps: prune per-app results by hand (no stable defaults key on Tahoe)"
 add_manual "Log out and back in for key repeat, locale, and input source to fully take effect"
 
 # --- Summary -----------------------------------------------------------------

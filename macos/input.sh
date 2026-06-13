@@ -28,10 +28,15 @@ defaults write -g ApplePressAndHoldEnabled -bool false
 ok "Press-and-hold disabled"
 
 # --- Disable intrusive text substitutions ----------------------------------
-info "Disabling auto-capitalisation and double-space period"
+# Smart quotes/dashes and autocorrect mangle code and shell input, so turn the
+# whole set off (autocorrect, capitalisation, period, quotes, dashes).
+info "Disabling auto-capitalisation, autocorrect and smart punctuation"
 defaults write -g NSAutomaticCapitalizationEnabled -bool false
 defaults write -g NSAutomaticPeriodSubstitutionEnabled -bool false
-ok "Auto-capitalise and double-space period disabled"
+defaults write -g NSAutomaticSpellingCorrectionEnabled -bool false
+defaults write -g NSAutomaticQuoteSubstitutionEnabled -bool false
+defaults write -g NSAutomaticDashSubstitutionEnabled -bool false
+ok "Autocorrect and smart punctuation disabled"
 
 # --- Tap to click on the trackpad ------------------------------------------
 info "Tap to click (trackpad + login)"
@@ -39,5 +44,12 @@ defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool
 defaults -currentHost write -g com.apple.mouse.tapBehavior -int 1
 defaults write -g com.apple.mouse.tapBehavior -int 1
 ok "Tap to click enabled"
+
+# --- Three-finger drag -----------------------------------------------------
+# Drag windows/selections with three fingers instead of click-and-hold.
+info "Three-finger drag"
+defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad TrackpadThreeFingerDrag -bool true
+defaults write com.apple.AppleMultitouchTrackpad TrackpadThreeFingerDrag -bool true
+ok "Three-finger drag enabled"
 
 note "Log out and back in for key repeat and press-and-hold to take effect everywhere."

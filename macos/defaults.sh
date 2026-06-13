@@ -29,6 +29,12 @@ defaults write com.apple.finder FXEnableExtensionChangeWarning -bool false
 defaults write com.apple.finder WarnOnEmptyTrash -bool false
 defaults write com.apple.finder FXRemoveOldTrashItems -bool true
 defaults write com.apple.finder QuitMenuItem -bool true
+# New Finder windows open to the home folder.
+defaults write com.apple.finder NewWindowTarget -string "PfHm"
+defaults write com.apple.finder NewWindowTargetPath -string "file://${HOME}/"
+# Don't litter .DS_Store files on network shares or USB volumes.
+defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool true
+defaults write com.apple.desktopservices DSDontWriteUSBStores -bool true
 
 # --- Terminal.app ------------------------------------------------------------
 # Profile is set by omacos theme set; just ensure secure keyboard is on.
@@ -38,29 +44,27 @@ defaults write com.apple.Terminal SecureKeyboardEntry -bool true
 mkdir -p "$HOME/Screenshots"
 defaults write com.apple.screencapture location -string "$HOME/Screenshots"
 defaults write com.apple.screencapture disable-shadow -bool true
+defaults write com.apple.screencapture type -string "png"
 
 # --- Global UI behaviour -----------------------------------------------------
 # Instant window resize (default is ~0.2 s).
 defaults write -g NSWindowResizeTime -float 0.001
-# Scrollbars always visible (don't hide when not scrolling).
-defaults write -g AppleShowScrollBars -string "Always"
 # Don't save new documents to iCloud by default.
 defaults write -g NSDocumentSaveNewDocumentsToCloud -bool false
 # Don't auto-terminate background apps to reclaim memory.
 defaults write -g NSDisableAutomaticTermination -bool true
-# Double-clicking a title bar does nothing (no minimize/zoom surprise).
-defaults write -g AppleMiniaturizeOnDoubleClick -bool false
 # WebKit inspect-element available in any WebKit view.
 defaults write -g WebKitDeveloperExtras -bool true
 # Inline text predictions off (interferes with terminal and code editors).
 defaults write -g NSAutomaticInlinePredictionEnabled -bool false
-
-# --- Stage Manager -----------------------------------------------------------
-defaults write com.apple.WindowManager GloballyEnabled -bool false
-
-# --- Widgets -----------------------------------------------------------------
-defaults write com.apple.WindowManager StandardHideWidgets -bool true
-defaults write com.apple.WindowManager StageManagerHideWidgets -bool true
+# Expand the save and print dialogs by default (show all options).
+defaults write -g NSNavPanelExpandedStateForSaveMode -bool true
+defaults write -g NSNavPanelExpandedStateForSaveMode2 -bool true
+defaults write -g PMPrintingExpandedStateForPrint -bool true
+defaults write -g PMPrintingExpandedStateForPrint2 -bool true
+# Scrollbars (AppleShowScrollBars) now live in appearance.sh; the title-bar
+# double-click action (AppleActionOnDoubleClick = Zoom) lives in dock.sh; Stage
+# Manager and widget visibility live in windows.sh.
 
 # --- Crash Reporter ----------------------------------------------------------
 # Silent crash reports; no dialog prompts during dev work.

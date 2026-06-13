@@ -34,6 +34,9 @@ brew "uv"
 brew "neovim"
 brew "tree-sitter"
 
+# Dock layout
+brew "dockutil"
+
 # Casks
 cask "nikitabobko/tap/aerospace"
 cask "ghostty"
