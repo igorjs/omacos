@@ -1,7 +1,158 @@
 {
-  "theme": "Tokyo Night",
-  "buffer_font_family": "JetBrainsMono Nerd Font",
-  "ui_font_size": 14,
+  "// Editor": null,
+  "semantic_tokens": "combined",
+  "relative_line_numbers": "enabled",
+  "rounded_selection": false,
   "cursor_shape": "block",
-  "cursor_blink": false
+  "cursor_blink": false,
+  "buffer_font_family": "JetBrainsMono Nerd Font",
+  "theme": "Tokyo Night",
+  "// UI scale — smaller ui_font shrinks tabs, status bar, panel labels.": null,
+  "ui_font_size": 14,
+  "buffer_font_size": 14,
+  "// AI: hide edit-predictions button (and the ghost-text feature itself).": null,
+  "show_edit_predictions": false,
+  "// LSP status indicator — hide the spinning dot in the status bar.": null,
+  "global_lsp_settings": {
+    "button": false
+  },
+  "// Reduce visual noise: no scrollbar, no minimap, no inline blame, no wrap guides": null,
+  "scrollbar": {
+    "show": "never"
+  },
+  "minimap": {
+    "show": "never"
+  },
+  "wrap_guides": [],
+  "indent_guides": {
+    "show": "never"
+  },
+  "scroll_beyond_last_line": "off",
+  "gutter": {
+    "code_actions": false,
+    "runnables": false,
+    "folds": false
+  },
+  "git": {
+    "inline_blame": {
+      "enabled": false
+    }
+  },
+  "inlay_hints": {
+    "enabled": false
+  },
+  "// Toolbar (the row above the editor — kill the icon clutter)": null,
+  "toolbar": {
+    "breadcrumbs": false,
+    "quick_actions": false,
+    "selections_menu": false,
+    "agent_review": false,
+    "code_actions": false
+  },
+  "// Title + tab bar": null,
+  "title_bar": {
+    "button_layout": "platform_default",
+    "show_menus": false,
+    "show_user_picture": false,
+    "show_user_menu": false,
+    "show_sign_in": false,
+    "show_onboarding_banner": false,
+    "show_branch_status_icon": false
+  },
+  "tabs": {
+    "close_position": "left",
+    "file_icons": false,
+    "git_status": false,
+    "show_diagnostics": "off",
+    "show_close_button": "hover"
+  },
+  "tab_bar": {
+    "show": true,
+    "show_pinned_tabs_in_separate_row": false,
+    "show_tab_bar_buttons": false,
+    "show_nav_history_buttons": false
+  },
+  "// Status bar — hide every panel toggle button": null,
+  "status_bar": {
+    "show_active_file": false,
+    "active_language_button": false,
+    "line_endings_button": false,
+    "cursor_position_button": true
+  },
+  "search": {
+    "case_sensitive": true,
+    "button": false
+  },
+  "terminal": {
+    "font_family": "JetBrainsMono Nerd Font",
+    "button": false
+  },
+  "diagnostics": {
+    "button": false
+  },
+  "agent": {
+    "button": false,
+    "default_view": "thread",
+    "dock": "right",
+    "default_open_ai_model": null
+  },
+  "chat_panel": {
+    "button": "never"
+  },
+  "notification_panel": {
+    "button": false
+  },
+  "collaboration_panel": {
+    "button": false
+  },
+  "outline_panel": {
+    "button": false
+  },
+  "debugger": {
+    "button": false
+  },
+  "git_panel": {
+    "button": false,
+    "dock": "right"
+  },
+  "// Project panel (right dock)": null,
+  "project_panel": {
+    "hide_root": false,
+    "git_status_indicator": true,
+    "diagnostic_badges": false,
+    "bold_folder_labels": false,
+    "folder_icons": false,
+    "file_icons": true,
+    "entry_spacing": "standard",
+    "hide_gitignore": false,
+    "dock": "right",
+    "indent_size": 16
+  },
+  "pane_split_direction_vertical": "right",
+  "zoomed_padding": true,
+  "use_system_window_tabs": true,
+  "focus_follows_mouse": {
+    "enabled": false
+  },
+  "centered_layout": {
+    "left_padding": 0.2
+  },
+  "bottom_dock_layout": "contained",
+  "preview_tabs": {
+    "enable_keep_preview_on_code_navigation": false,
+    "enable_preview_multibuffer_from_code_navigation": true,
+    "enable_preview_from_file_finder": true
+  },
+  "// Privacy + behavior": null,
+  "telemetry": {
+    "diagnostics": false,
+    "metrics": false
+  },
+  "redact_private_values": true,
+  "edit_predictions": {
+    "open_ai_compatible_api": {
+      "api_url": ""
+    }
+  },
+  "cli_default_open_behavior": "new_window"
 }

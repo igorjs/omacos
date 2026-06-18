@@ -38,32 +38,13 @@ mkdir -p "$STATE_DIR"
 
 TS() { date +%Y%m%d-%H%M%S; }
 
-# --- json merge: keys in $1 override $target, others preserved ---------------
-json_merge() {
-  local overlay="$1" target="$2"
-  if [[ ! -f "$target" ]]; then
-    mkdir -p "$(dirname "$target")"
-    cp "$overlay" "$target"
-    return
-  fi
-  cp "$target" "$target.bak.$(TS)"
-  python3 - "$overlay" "$target" <<'PY'
-import json, sys
-overlay_path, target_path = sys.argv[1], sys.argv[2]
-def load(p):
-    try:
-        with open(p) as f: return json.load(f)
-    except Exception:
-        return {}
-o = load(overlay_path)
-t = load(target_path)
-if not isinstance(t, dict): t = {}
-if not isinstance(o, dict): o = {}
-t.update(o)
-with open(target_path, 'w') as f:
-    json.dump(t, f, indent=2)
-    f.write("\n")
-PY
+# --- zed theme: update the "theme" key in-place (JSONC-safe) ----------------
+zed_set_theme() {
+  local theme_name="$1" target="$2"
+  [[ -f "$target" ]] || return 0
+  # Replace the existing "theme": "..." line with the new value.
+  # sed handles the JSONC comment keys that Python's json.load can't parse.
+  sed -i '' "s|\"theme\":.*|\"theme\": \"${theme_name}\",|" "$target"
 }
 
 # --- theme list / set --------------------------------------------------------
@@ -112,10 +93,13 @@ cmd_theme_set() {
     fi
   fi
 
-  # 3. Zed: merge themes/<name>/zed.json into ~/.config/zed/settings.json.
+  # 3. Zed: update the theme key in settings.json in-place.
   if [[ -f "$td/zed.json" ]]; then
-    json_merge "$td/zed.json" "$HOME/.config/zed/settings.json"
-    ok "Zed settings merged (theme key)"
+    zed_theme_name="$(python3 -c "import json,sys; print(json.load(open(sys.argv[1])).get('theme',''))" "$td/zed.json" 2>/dev/null || true)"
+    if [[ -n "$zed_theme_name" ]]; then
+      zed_set_theme "$zed_theme_name" "$HOME/.config/zed/settings.json"
+      ok "Zed theme set: $zed_theme_name"
+    fi
   fi
 
   # 4. Starship: concat config/starship.toml + themes/<name>/starship.toml.
@@ -354,7 +338,16 @@ cmd_doctor() {
   done
 
   printf "\n${DIM}# Shell wiring${RESET}\n"
-  if grep -qsF '# >>> omacos starship >>>' "$HOME/.zshrc"; then
+  if grep -qsF '# >>> omacos >>>' "$HOME/.zshenv" 2>/dev/null; then
+    printf "  ${GREEN}ok${RESET}    OmacOS managed block in ~/.zshenv\n"
+    grep -qsF 'EDITOR'           "$HOME/.zshenv" && printf "  ${GREEN}ok${RESET}    EDITOR set in ~/.zshenv\n"              || { printf "  ${RED}fail${RESET}  EDITOR missing from ~/.zshenv\n"; (( FAILS++ )) || true; }
+    grep -qsF 'PATH'             "$HOME/.zshenv" && printf "  ${GREEN}ok${RESET}    PATH set in ~/.zshenv\n"                || { printf "  ${RED}fail${RESET}  PATH missing from ~/.zshenv\n"; (( FAILS++ )) || true; }
+    grep -qsF 'BAT_THEME'        "$HOME/.zshenv" && printf "  ${GREEN}ok${RESET}    BAT_THEME set in ~/.zshenv\n"           || { printf "  ${PURPLE}warn${RESET}  BAT_THEME missing from ~/.zshenv\n"; (( WARNS++ )) || true; }
+  else
+    printf "  ${RED}fail${RESET}  OmacOS managed block missing in ~/.zshenv (re-run install/shell.sh)\n"
+    (( FAILS++ )) || true
+  fi
+  if grep -qsF '# >>> omacos >>>' "$HOME/.zshrc" 2>/dev/null; then
     printf "  ${GREEN}ok${RESET}    OmacOS managed block in ~/.zshrc\n"
     grep -qsF 'mise activate'         "$HOME/.zshrc" && printf "  ${GREEN}ok${RESET}    mise activate present\n"              || { printf "  ${RED}fail${RESET}  mise activate missing\n"; (( FAILS++ )) || true; }
     grep -qsF 'stty -ixon'            "$HOME/.zshrc" && printf "  ${GREEN}ok${RESET}    stty -ixon present (Ctrl+S usable)\n" || { printf "  ${PURPLE}warn${RESET}  stty -ixon missing; Ctrl+S may freeze terminal\n"; (( WARNS++ )) || true; }
@@ -371,7 +364,7 @@ cmd_doctor() {
     printf "  ${PURPLE}warn${RESET}  EDITOR=%s (expected 'zed --wait')\n" "$EDITOR"
     (( WARNS++ )) || true
   else
-    printf "  ${PURPLE}warn${RESET}  EDITOR not set in this shell; source ~/.zshrc or open a new terminal\n"
+    printf "  ${PURPLE}warn${RESET}  EDITOR not set in this shell; open a new terminal\n"
     (( WARNS++ )) || true
   fi
 

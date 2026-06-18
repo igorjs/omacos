@@ -198,34 +198,8 @@ link_or_copy "$OMACOS_ROOT/config/nvim"               "$HOME/.config/nvim"
 # so install_plugins.sh can read the @plugin entries from ~/.tmux.conf.
 bash "$OMACOS_ROOT/install/tmux.sh"
 
-# Zed: merge the base font/theme keys into ~/.config/zed/settings.json,
-# preserving any user-tuned keys. `omacos theme set` will then overlay the
-# theme key on top.
-zed_target="$HOME/.config/zed/settings.json"
-zed_overlay="$OMACOS_ROOT/config/zed.settings.json"
-mkdir -p "$(dirname "$zed_target")"
-if [[ -f "$zed_target" ]]; then
-  cp "$zed_target" "$zed_target.bak.$TS"
-  python3 - "$zed_overlay" "$zed_target" <<'PY'
-import json, sys
-o_path, t_path = sys.argv[1], sys.argv[2]
-def load(p):
-    try:
-        with open(p) as f: return json.load(f)
-    except Exception:
-        return {}
-o = load(o_path); t = load(t_path)
-if not isinstance(t, dict): t = {}
-if not isinstance(o, dict): o = {}
-t.update(o)
-with open(t_path, 'w') as f:
-    json.dump(t, f, indent=2); f.write("\n")
-PY
-  ok "Merged base Zed font/theme keys into $zed_target"
-else
-  cp "$zed_overlay" "$zed_target"
-  ok "Wrote base Zed settings to $zed_target"
-fi
+# Zed: write settings and install extensions.
+bash "$OMACOS_ROOT/install/zed.sh"
 
 # --- 10. Neovim bootstrap (headless: plugins + treesitter + LSP servers) ----
 step "Neovim bootstrap"
