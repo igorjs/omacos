@@ -97,6 +97,9 @@
   "chat_panel": {
     "button": "never"
   },
+  "threads": {
+    "button": false
+  },
   "notification_panel": {
     "button": false
   },
