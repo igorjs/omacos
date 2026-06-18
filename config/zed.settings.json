@@ -89,6 +89,7 @@
     "button": false
   },
   "agent": {
+    "enabled": false,
     "button": false,
     "default_view": "thread",
     "dock": "right",
@@ -118,6 +119,7 @@
   },
   "// Project panel (right dock)": null,
   "project_panel": {
+    "button": false,
     "hide_root": false,
     "git_status_indicator": true,
     "diagnostic_badges": false,
@@ -157,3 +159,4 @@
   },
   "cli_default_open_behavior": "new_window"
 }
+
