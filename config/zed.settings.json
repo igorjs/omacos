@@ -28,6 +28,7 @@
     "show": "never"
   },
   "scroll_beyond_last_line": "off",
+  "vertical_scroll_margin": 8,
   "gutter": {
     "code_actions": false,
     "runnables": false,
@@ -67,17 +68,14 @@
     "show_close_button": "hover"
   },
   "tab_bar": {
-    "show": true,
-    "show_pinned_tabs_in_separate_row": false,
-    "show_tab_bar_buttons": false,
-    "show_nav_history_buttons": false
+    "show": false
   },
-  "// Status bar — hide every panel toggle button": null,
+  "// Status bar — hide everything": null,
   "status_bar": {
     "show_active_file": false,
     "active_language_button": false,
     "line_endings_button": false,
-    "cursor_position_button": true
+    "cursor_position_button": false
   },
   "search": {
     "case_sensitive": true,
