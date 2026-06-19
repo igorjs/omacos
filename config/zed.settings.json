@@ -11,7 +11,10 @@
   "ui_font_size": 14,
   "buffer_font_size": 14,
   "// AI: hide edit-predictions button (and the ghost-text feature itself).": null,
-  "show_edit_predictions": false,
+  "show_edit_predictions": true,
+  "edit_predictions": {
+    "provider": "codestral"
+  },
   "// LSP status indicator — hide the spinning dot in the status bar.": null,
   "global_lsp_settings": {
     "button": false
@@ -152,11 +155,6 @@
     "metrics": false
   },
   "redact_private_values": true,
-  "edit_predictions": {
-    "open_ai_compatible_api": {
-      "api_url": ""
-    }
-  },
   "cli_default_open_behavior": "new_window"
 }
 
