@@ -119,13 +119,14 @@ if command -v starship >/dev/null 2>&1; then
   eval "\$(starship init zsh)"
 fi
 
-# Personal overrides (sourced before syntax highlighting so widgets still wrap).
-[[ -f "\$HOME/.zshrc.local" ]] && source "\$HOME/.zshrc.local"
-
-# 6. zsh-syntax-highlighting: MUST be sourced last (it wraps ZLE widgets)
+# 6. zsh-syntax-highlighting: MUST be sourced before .zshrc.local (wraps ZLE widgets)
 if [[ -f "$brew_prefix/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]]; then
   source "$brew_prefix/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 fi
+
+# Personal overrides: always last so user settings win over everything.
+# OmacOS never edits ~/.zshrc.local.
+[[ -f "\$HOME/.zshrc.local" ]] && source "\$HOME/.zshrc.local"
 BLOCK
 }
 
