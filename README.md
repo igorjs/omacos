@@ -2,7 +2,7 @@
 
 One-command macOS setup. Tokyo Night themed. Modular and re-runnable.
 
-OmacOS is the macOS equivalent of [Omakub](https://omakub.org/) and [Omarchy](https://omarchy.com/): a single `./install.sh` that turns a fresh Mac into a fully configured development environment. Every script is idempotent, so you can re-run it safely at any time. Configs are symlinked from the repo by default, so your settings stay version-controlled.
+OmacOS is the macOS equivalent of [Omakub](https://omakub.org/) and [Omarchy](https://omarchy.org/): a single `./install.sh` that turns a fresh Mac into a fully configured development environment. Every script is idempotent, so you can re-run it safely at any time. Configs are symlinked from the repo by default, so your settings stay version-controlled.
 
 ---
 
@@ -266,5 +266,5 @@ These are intentionally excluded from v1 to keep the initial setup minimal and r
 ## Inspiration
 
 - [Omakub](https://omakub.org/) by DHH - the Ubuntu equivalent
-- [Omarchy](https://omarchy.com/) - Arch Linux variant
+- [Omarchy](https://omarchy.org/) - Arch Linux variant
 - [Tokyo Night](https://github.com/folke/tokyonight.nvim) color scheme by Folke Vereecken
