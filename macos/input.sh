@@ -52,4 +52,26 @@ defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad TrackpadThreeF
 defaults write com.apple.AppleMultitouchTrackpad TrackpadThreeFingerDrag -bool true
 ok "Three-finger drag enabled"
 
+# --- Globe (fn) key: do nothing ---------------------------------------------
+info "Globe key: do nothing"
+defaults write com.apple.HIToolbox AppleFnUsageType -integer 0
+ok "Globe key set to do nothing"
+
+# --- Keyboard navigation: off -----------------------------------------------
+# Tab cycles through text fields only (not all controls on screen).
+info "Keyboard navigation off (text fields only)"
+defaults write -g AppleKeyboardUIMode -int 0
+ok "Keyboard navigation off"
+
+# --- Keyboard backlight: auto-dim in low light ------------------------------
+info "Keyboard backlight: auto-dim in low light"
+defaults write com.apple.BezelServices.kDim -bool true
+ok "Keyboard backlight auto-dim enabled"
+
+# --- Dictation: off, auto-punctuation off -----------------------------------
+info "Dictation off, auto-punctuation off"
+defaults write com.apple.HIToolbox AppleDictationAutoEnable -int 0
+defaults write com.apple.SpeechRecognitionCore SpeechRecognitionAutoPunctuateEnabled -bool false
+ok "Dictation disabled"
+
 note "Log out and back in for key repeat and press-and-hold to take effect everywhere."
