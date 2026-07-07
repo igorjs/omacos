@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
 #
 # macOS security hardening and privacy defaults.
 # The firewall/mDNS/remote-access blocks require sudo — the script prompts once

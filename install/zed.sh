@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
 #
 # Zed: write settings and install extensions.
 # Settings are written fresh on every run (backup preserved). Extensions are
