@@ -1,3 +1,4 @@
+-- SPDX-License-Identifier: Apache-2.0
 vim.g.mapleader = " "
 vim.opt.number = true
 vim.opt.relativenumber = true

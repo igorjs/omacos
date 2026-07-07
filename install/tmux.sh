@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
 #
 # Install TPM (Tmux Plugin Manager) and bootstrap the plugins listed in
 # config/tmux.conf (resurrect + continuum for session save/restore).

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
 #
 # macOS appearance: non-color, scriptable parts only.
 # Theme colors (accent, highlight, wallpaper) live in themes/<name>/macos.sh

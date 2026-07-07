@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
 #
 # Install Claude Code via Anthropic's native installer (NOT Homebrew).
 # Reason: the native binary auto-updates and has zero dependencies; the

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
 #
 # Prereqs: Xcode Command Line Tools and (on Apple Silicon) Rosetta 2.
 # These must be in place before Homebrew can be installed cleanly.

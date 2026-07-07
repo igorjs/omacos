@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
 #
 # Language runtimes via mise + Python packaging via uv.
 # mise and uv come from the Brewfile. This script sets the global defaults.

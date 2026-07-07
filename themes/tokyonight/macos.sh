@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
 #
 # Tokyo Night macOS overlay: theme-owned colors (accent, highlight, wallpaper).
 # Run by `omacos theme set tokyonight`. Re-runnable.

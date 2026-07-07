@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
 #
 # Desktop & Dock pane: Stage Manager, desktop items/widgets, window tiling, and
 # global window behaviours. Dock-specific keys live in dock.sh; this covers the

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
 #
 # mac-snapshot.sh: capture, diff, and export macOS settings + installed software.
 #

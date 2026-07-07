@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
 #
 # Docker Desktop is installed via the Brewfile (cask "docker"). This script
 # just verifies install and prints the manual first-launch step.

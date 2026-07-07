@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
 #
 # Language / region / keyboard layout.
 # User-configurable via env. Region and language are reliable; the keyboard

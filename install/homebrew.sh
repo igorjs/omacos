@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
 #
 # Install Homebrew if missing and put it on PATH for the current shell.
 # Handles Apple Silicon (/opt/homebrew) and Intel (/usr/local) prefixes.
