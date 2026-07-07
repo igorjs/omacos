@@ -70,6 +70,13 @@ Or, to copy config files instead of symlinking them:
 ### Containers
 - **Docker Desktop** - note: requires one manual launch to complete setup
 
+### Security
+- **LuLu** - Objective-See firewall that alerts on outgoing network connections
+- **OverSight** - Objective-See monitor for microphone and webcam access
+- **KnockKnock** - Objective-See scanner for persistently installed software
+- **TaskExplorer** - Objective-See process explorer
+- **ClamAV** - open-source antivirus engine (run `freshclam` to fetch signatures)
+
 ### AI
 - **Claude Code** - Anthropic's AI coding tool (requires a paid Anthropic plan or API key)
 
@@ -92,7 +99,9 @@ After the installer finishes, a few things require manual action:
 
 5. **macOS Sequoia appearance tweaks**: System Settings > Appearance lets you set Icon Style and Folder Color. These settings have no stable scriptable defaults keys, so they require manual selection.
 
-6. **Restart your shell**: Open a new terminal window, or run `source ~/.zshrc`.
+6. **LuLu network extension**: On first launch, LuLu prompts to approve its system/network extension. System Settings > Privacy and Security, allow the extension for the firewall to filter traffic.
+
+7. **Restart your shell**: Open a new terminal window, or run `source ~/.zshrc`.
 
 ---
 

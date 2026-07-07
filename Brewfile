@@ -25,6 +25,7 @@ brew "lazygit"
 # Security and auth
 brew "libfido2"
 brew "openssh"
+brew "clamav"
 
 # Version manager and Python packaging
 brew "mise"
@@ -43,6 +44,12 @@ cask "ghostty"
 cask "zed"
 cask "docker"
 cask "font-jetbrains-mono-nerd-font"
+
+# Security (Objective-See)
+cask "lulu"
+cask "oversight"
+cask "knockknock"
+cask "taskexplorer"
 
 # Optional (uncomment to add):
 # cask "raycast"
