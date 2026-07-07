@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
 #
 # Opinionated macOS defaults beyond appearance, Dock, input, and locale.
 #

@@ -1,3 +1,4 @@
+-- SPDX-License-Identifier: Apache-2.0
 -- Tokyo Night colorscheme for Neovim.
 -- Copied to ~/.config/nvim/theme.lua by `omacos theme set tokyonight`.
 -- Pin style = "night" so plain `tokyonight` renders the dark #1a1b26 palette

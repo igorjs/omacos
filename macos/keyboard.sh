@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
 #
 # Disable macOS system keyboard shortcuts that conflict with terminal/tmux usage.
 # Changes take effect after the activateSettings call at the bottom.

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
 #
 # Install everything in the curated Brewfile. Idempotent: `brew bundle` skips
 # already-installed packages.
