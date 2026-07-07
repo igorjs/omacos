@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
 #
 # Battery: Low Power Mode "Only on Battery". pmset needs sudo. -b is the
 # battery power source, -c is charger/AC. So enable on battery, disable on AC.

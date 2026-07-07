@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
 #
 # Accessibility pane: Display and Motion sections. All keys live in
 # com.apple.universalaccess, which is a TCC-protected preferences domain:

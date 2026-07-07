@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
 #
 # Keyboard + trackpad tuning for a fast typist.
 # Most of these need a logout/restart and a relaunch of affected apps to

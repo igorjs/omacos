@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
 #
 # git + gh configuration.
 # git and gh are installed by the Brewfile; this script sets identity and
