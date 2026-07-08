@@ -5,9 +5,11 @@
 #
 set -euo pipefail
 
-BLUE='\033[38;2;122;162;247m'; GREEN='\033[38;2;158;206;106m'; RESET='\033[0m'
-info(){ printf "${BLUE}==>${RESET} %s\n" "$1"; }
-ok(){   printf "${GREEN} ok${RESET} %s\n" "$1"; }
+BLUE='\033[38;2;122;162;247m'
+GREEN='\033[38;2;158;206;106m'
+RESET='\033[0m'
+info() { printf "${BLUE}==>${RESET} %s\n" "$1"; }
+ok() { printf "${GREEN} ok${RESET} %s\n" "$1"; }
 
 info "Applying Safari defaults"
 

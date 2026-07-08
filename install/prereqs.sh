@@ -6,12 +6,15 @@
 #
 set -euo pipefail
 
-BLUE='\033[38;2;122;162;247m'; GREEN='\033[38;2;158;206;106m'
-RED='\033[38;2;247;118;142m';  PURPLE='\033[38;2;187;154;247m'; RESET='\033[0m'
-info(){ printf "${BLUE}==>${RESET} %s\n" "$1"; }
-ok(){   printf "${GREEN} ok${RESET} %s\n" "$1"; }
-warn(){ printf "${RED} !! ${RESET}%s\n" "$1"; }
-note(){ printf "${PURPLE} MANUAL${RESET} %s\n" "$1"; }
+BLUE='\033[38;2;122;162;247m'
+GREEN='\033[38;2;158;206;106m'
+RED='\033[38;2;247;118;142m'
+PURPLE='\033[38;2;187;154;247m'
+RESET='\033[0m'
+info() { printf "${BLUE}==>${RESET} %s\n" "$1"; }
+ok() { printf "${GREEN} ok${RESET} %s\n" "$1"; }
+warn() { printf "${RED} !! ${RESET}%s\n" "$1"; }
+note() { printf "${PURPLE} MANUAL${RESET} %s\n" "$1"; }
 
 # --- Xcode Command Line Tools ----------------------------------------------
 if /usr/bin/xcode-select -p >/dev/null 2>&1; then
@@ -25,10 +28,10 @@ else
   until /usr/bin/xcode-select -p >/dev/null 2>&1; do
     sleep 10
     tries=$((tries + 1))
-    if (( tries % 6 == 0 )); then
-      printf "${PURPLE}    still waiting (%d minute(s))${RESET}\n" $(( tries / 6 ))
+    if ((tries % 6 == 0)); then
+      printf "${PURPLE}    still waiting (%d minute(s))${RESET}\n" $((tries / 6))
     fi
-    if (( tries > 60 )); then
+    if ((tries > 60)); then
       warn "Gave up waiting after ~10 minutes."
       note "Finish the Xcode CLT install dialog by hand, then re-run ./install.sh"
       exit 1

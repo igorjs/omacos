@@ -8,11 +8,13 @@
 #
 set -euo pipefail
 
-BLUE='\033[38;2;122;162;247m'; GREEN='\033[38;2;158;206;106m'
-PURPLE='\033[38;2;187;154;247m'; RESET='\033[0m'
-info(){ printf "${BLUE}==>${RESET} %s\n" "$1"; }
-ok(){   printf "${GREEN} ok${RESET} %s\n" "$1"; }
-note(){ printf "${PURPLE} MANUAL${RESET} %s\n" "$1"; }
+BLUE='\033[38;2;122;162;247m'
+GREEN='\033[38;2;158;206;106m'
+PURPLE='\033[38;2;187;154;247m'
+RESET='\033[0m'
+info() { printf "${BLUE}==>${RESET} %s\n" "$1"; }
+ok() { printf "${GREEN} ok${RESET} %s\n" "$1"; }
+note() { printf "${PURPLE} MANUAL${RESET} %s\n" "$1"; }
 
 OMACOS_ROOT="${OMACOS_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 
@@ -29,10 +31,16 @@ ok "Zed settings written to $zed_settings"
 
 # --- Extensions --------------------------------------------------------------
 ext_list="$OMACOS_ROOT/config/zed.extensions"
-[[ -f "$ext_list" ]] || { ok "No zed.extensions file; skipping"; exit 0; }
+[[ -f "$ext_list" ]] || {
+  ok "No zed.extensions file; skipping"
+  exit 0
+}
 
 mapfile -t extensions < <(grep -v '^#' "$ext_list" | grep -v '^[[:space:]]*$')
-[[ ${#extensions[@]} -eq 0 ]] && { ok "Extension list is empty; skipping"; exit 0; }
+[[ ${#extensions[@]} -eq 0 ]] && {
+  ok "Extension list is empty; skipping"
+  exit 0
+}
 
 if [[ ! -d "/Applications/Zed.app" ]]; then
   note "Zed not installed; skipping extension install"

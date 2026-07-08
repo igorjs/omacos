@@ -11,14 +11,20 @@
 #
 set -euo pipefail
 
-BLUE='\033[38;2;122;162;247m'; GREEN='\033[38;2;158;206;106m'
-PURPLE='\033[38;2;187;154;247m'; RED='\033[38;2;247;118;142m'; RESET='\033[0m'
-info(){ printf "${BLUE}==>${RESET} %s\n" "$1"; }
-ok(){   printf "${GREEN} ok${RESET} %s\n" "$1"; }
-note(){ printf "${PURPLE} MANUAL${RESET} %s\n" "$1"; }
-warn(){ printf "${RED} !! ${RESET}%s\n" "$1"; }
+BLUE='\033[38;2;122;162;247m'
+GREEN='\033[38;2;158;206;106m'
+PURPLE='\033[38;2;187;154;247m'
+RED='\033[38;2;247;118;142m'
+RESET='\033[0m'
+info() { printf "${BLUE}==>${RESET} %s\n" "$1"; }
+ok() { printf "${GREEN} ok${RESET} %s\n" "$1"; }
+note() { printf "${PURPLE} MANUAL${RESET} %s\n" "$1"; }
+warn() { printf "${RED} !! ${RESET}%s\n" "$1"; }
 
-command -v git >/dev/null 2>&1 || { warn "git not on PATH; run install/packages.sh first"; exit 1; }
+command -v git >/dev/null 2>&1 || {
+  warn "git not on PATH; run install/packages.sh first"
+  exit 1
+}
 
 # --- Opinionated git defaults (only set if not already set) -----------------
 set_if_unset() {
@@ -31,14 +37,14 @@ set_if_unset() {
   fi
 }
 
-set_if_unset init.defaultBranch       "main"
-set_if_unset pull.rebase              "true"
-set_if_unset push.autoSetupRemote     "true"
-set_if_unset core.editor              "zed --wait"
+set_if_unset init.defaultBranch "main"
+set_if_unset pull.rebase "true"
+set_if_unset push.autoSetupRemote "true"
+set_if_unset core.editor "zed --wait"
 # Derive ssh-keygen: prefer system command (works on Intel + arm64);
 # fall back to brew --prefix for Homebrew-managed installs.
 _ssh_keygen=$(command -v ssh-keygen 2>/dev/null || echo "$(brew --prefix)/bin/ssh-keygen")
-set_if_unset gpg.ssh.program          "$_ssh_keygen"
+set_if_unset gpg.ssh.program "$_ssh_keygen"
 unset _ssh_keygen
 
 # --- Identity ---------------------------------------------------------------
@@ -48,7 +54,7 @@ GIT_USER_EMAIL="${GIT_USER_EMAIL:-$(git config --global --get user.email 2>/dev/
 if [[ -z "$GIT_USER_NAME" ]]; then
   note "git user.name not set; run: git config --global user.name \"Your Name\""
 else
-  git config --global user.name  "$GIT_USER_NAME"
+  git config --global user.name "$GIT_USER_NAME"
   ok "git user.name = $GIT_USER_NAME"
 fi
 

@@ -7,11 +7,13 @@
 #
 set -euo pipefail
 
-BLUE='\033[38;2;122;162;247m'; GREEN='\033[38;2;158;206;106m'
-YELLOW='\033[38;2;224;175;104m'; RESET='\033[0m'
-info(){ printf "${BLUE}==>${RESET} %s\n" "$1"; }
-ok(){   printf "${GREEN} ok${RESET} %s\n" "$1"; }
-warn(){ printf "${YELLOW}warn${RESET} %s\n" "$1"; }
+BLUE='\033[38;2;122;162;247m'
+GREEN='\033[38;2;158;206;106m'
+YELLOW='\033[38;2;224;175;104m'
+RESET='\033[0m'
+info() { printf "${BLUE}==>${RESET} %s\n" "$1"; }
+ok() { printf "${GREEN} ok${RESET} %s\n" "$1"; }
+warn() { printf "${YELLOW}warn${RESET} %s\n" "$1"; }
 
 # Acquire sudo credentials once up front; fail fast if unavailable.
 if ! sudo -n true 2>/dev/null; then
@@ -73,8 +75,8 @@ ok "Apple Intelligence opt-in disabled"
 # (iCloud) keep Maps/Find My/iCloud working.
 info "Blackholing Weather and News endpoints"
 blocked_hosts=(
-  weatherkit.apple.com weather-data.apple.com weather-map.apple.com   # Weather
-  news-edge.apple.com apple.news news-events.apple.com                # News
+  weatherkit.apple.com weather-data.apple.com weather-map.apple.com # Weather
+  news-edge.apple.com apple.news news-events.apple.com              # News
 )
 hosts_open="# >>> omacos blocked endpoints >>>"
 hosts_close="# <<< omacos blocked endpoints <<<"
@@ -82,13 +84,13 @@ blocked_tmp="$(mktemp)"
 # Strip any previous block (markers inclusive), then append a fresh one.
 awk -v o="$hosts_open" -v c="$hosts_close" '
   $0==o{skip=1; next} $0==c&&skip{skip=0; next} !skip
-' /etc/hosts > "$blocked_tmp"
+' /etc/hosts >"$blocked_tmp"
 {
   echo "$hosts_open"
   for h in "${blocked_hosts[@]}"; do printf "0.0.0.0 %s\n:: %s\n" "$h" "$h"; done
   echo "$hosts_close"
-} >> "$blocked_tmp"
-sudo tee /etc/hosts < "$blocked_tmp" >/dev/null
+} >>"$blocked_tmp"
+sudo tee /etc/hosts <"$blocked_tmp" >/dev/null
 rm -f "$blocked_tmp"
 sudo dscacheutil -flushcache 2>/dev/null || true
 sudo killall -HUP mDNSResponder 2>/dev/null || true
@@ -103,7 +105,7 @@ ok "Weather and News endpoints blocked in /etc/hosts"
 info "Disabling Weather and News daemons"
 for svc in com.apple.weatherd com.apple.newsd; do
   sudo launchctl disable "system/$svc" 2>/dev/null || true
-  sudo launchctl bootout  "system/$svc" 2>/dev/null || true
+  sudo launchctl bootout "system/$svc" 2>/dev/null || true
 done
 ok "weatherd and newsd disabled"
 
@@ -128,7 +130,7 @@ SU=/Library/Preferences/com.apple.SoftwareUpdate
 sudo defaults write "$SU" AutomaticCheckEnabled -bool true            # check for updates
 sudo defaults write "$SU" AutomaticDownload -bool true                # download in background
 sudo defaults write "$SU" CriticalUpdateInstall -bool true            # install security responses
-sudo defaults write "$SU" ConfigDataInstall -bool true               # install system data files
+sudo defaults write "$SU" ConfigDataInstall -bool true                # install system data files
 sudo defaults write "$SU" AutomaticallyInstallMacOSUpdates -bool true # install macOS updates
 defaults write com.apple.commerce AutoUpdate -bool true               # App Store app updates
 ok "Automatic updates enabled (check, download, install)"
@@ -165,10 +167,10 @@ ok "Immediate password required after sleep"
 # rather than clobber managed policy.
 info "Require admin password for system-wide settings"
 sp_plist="$(mktemp -t omacos.system.preferences)" || sp_plist="/tmp/omacos.system.preferences.plist"
-if security authorizationdb read system.preferences > "$sp_plist" 2>/dev/null; then
+if security authorizationdb read system.preferences >"$sp_plist" 2>/dev/null; then
   if /usr/libexec/PlistBuddy -c "Print :shared" "$sp_plist" >/dev/null 2>&1; then
     /usr/libexec/PlistBuddy -c "Set :shared false" "$sp_plist" >/dev/null 2>&1
-    if sudo security authorizationdb write system.preferences < "$sp_plist" 2>/dev/null; then
+    if sudo security authorizationdb write system.preferences <"$sp_plist" 2>/dev/null; then
       ok "Admin password required for system-wide settings"
     else
       warn "Could not update system.preferences authorization right"
@@ -188,14 +190,14 @@ rm -f "$sp_plist"
 OMACOS_AUTOLOGOUT_MINUTES="${OMACOS_AUTOLOGOUT_MINUTES:-120}"
 info "Automatic logout after ${OMACOS_AUTOLOGOUT_MINUTES} min of inactivity"
 sudo defaults write /Library/Preferences/.GlobalPreferences \
-  com.apple.autologout.AutoLogOutDelay -int "$(( OMACOS_AUTOLOGOUT_MINUTES * 60 ))"
+  com.apple.autologout.AutoLogOutDelay -int "$((OMACOS_AUTOLOGOUT_MINUTES * 60))"
 ok "Auto-logout set to ${OMACOS_AUTOLOGOUT_MINUTES} minutes"
 
 # --- Safari baseline privacy -------------------------------------------------
 # Safari preferences are sandboxed — write via open-source domain, not container path.
 info "Safari privacy"
-defaults write com.apple.Safari SendDoNotTrackHTTPHeader -bool true 2>/dev/null \
-  || warn "Safari prefs sandboxed; open Safari once then re-run to apply"
+defaults write com.apple.Safari SendDoNotTrackHTTPHeader -bool true 2>/dev/null ||
+  warn "Safari prefs sandboxed; open Safari once then re-run to apply"
 defaults write com.apple.Safari WebKitJavaScriptCanOpenWindowsAutomatically -bool false 2>/dev/null || true
 ok "Safari: Do Not Track on, no JS popup windows"
 

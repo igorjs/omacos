@@ -11,20 +11,22 @@
 #
 set -euo pipefail
 
-BLUE='\033[38;2;122;162;247m'; GREEN='\033[38;2;158;206;106m'
-YELLOW='\033[38;2;224;175;104m'; RESET='\033[0m'
-info(){ printf "${BLUE}==>${RESET} %s\n" "$1"; }
-ok(){   printf "${GREEN} ok${RESET} %s\n" "$1"; }
-warn(){ printf "${YELLOW}warn${RESET} %s\n" "$1"; }
+BLUE='\033[38;2;122;162;247m'
+GREEN='\033[38;2;158;206;106m'
+YELLOW='\033[38;2;224;175;104m'
+RESET='\033[0m'
+info() { printf "${BLUE}==>${RESET} %s\n" "$1"; }
+ok() { printf "${GREEN} ok${RESET} %s\n" "$1"; }
+warn() { printf "${YELLOW}warn${RESET} %s\n" "$1"; }
 
 UA=com.apple.universalaccess
 
 info "Accessibility: Display and Motion"
 if defaults write "$UA" reduceTransparency -bool true 2>/dev/null; then
-  defaults write "$UA" differentiateWithoutColor -bool true   # Differentiate without colour: on
-  defaults write "$UA" reduceMotion -bool true                # Motion > Reduce motion: on
-  defaults write "$UA" increaseContrast -bool false           # Increase contrast: off
-  defaults write "$UA" showWindowTitlebarIcons -bool false    # Show window title icons: off
+  defaults write "$UA" differentiateWithoutColor -bool true # Differentiate without colour: on
+  defaults write "$UA" reduceMotion -bool true              # Motion > Reduce motion: on
+  defaults write "$UA" increaseContrast -bool false         # Increase contrast: off
+  defaults write "$UA" showWindowTitlebarIcons -bool false  # Show window title icons: off
   ok "Reduce transparency/motion, differentiate without colour set"
 else
   warn "Cannot write $UA: your terminal needs Full Disk Access."

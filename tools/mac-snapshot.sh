@@ -25,14 +25,20 @@ set -euo pipefail
 SNAP_DIR="${MAC_SNAPSHOT_DIR:-$HOME/.mac-snapshots}"
 mkdir -p "$SNAP_DIR"
 
-BLUE='\033[38;2;122;162;247m'; GREEN='\033[38;2;158;206;106m'
-RED='\033[38;2;247;118;142m';  PURPLE='\033[38;2;187;154;247m'
-DIM='\033[38;2;86;95;137m';    RESET='\033[0m'
-info(){ printf "${BLUE}==>${RESET} %s\n" "$1"; }
-ok(){   printf "${GREEN} ok${RESET} %s\n" "$1"; }
-warn(){ printf "${RED} !! ${RESET}%s\n" "$1"; }
+BLUE='\033[38;2;122;162;247m'
+GREEN='\033[38;2;158;206;106m'
+RED='\033[38;2;247;118;142m'
+PURPLE='\033[38;2;187;154;247m'
+DIM='\033[38;2;86;95;137m'
+RESET='\033[0m'
+info() { printf "${BLUE}==>${RESET} %s\n" "$1"; }
+ok() { printf "${GREEN} ok${RESET} %s\n" "$1"; }
+warn() { printf "${RED} !! ${RESET}%s\n" "$1"; }
 
-if [[ "$(uname -s)" != "Darwin" ]]; then warn "macOS only."; exit 1; fi
+if [[ "$(uname -s)" != "Darwin" ]]; then
+  warn "macOS only."
+  exit 1
+fi
 
 take_snapshot() {
   local label="${1:-$(date +%Y%m%d-%H%M%S)}"
@@ -41,17 +47,17 @@ take_snapshot() {
   info "Snapshotting defaults to $dir"
 
   # Global domain
-  defaults read -g > "$dir/_global.txt" 2>/dev/null || true
+  defaults read -g >"$dir/_global.txt" 2>/dev/null || true
 
   # Every per-app / per-system domain
   defaults domains | tr ',' '\n' | sed 's/^ *//' | while read -r domain; do
     [[ -z "$domain" ]] && continue
     local safe="${domain//\//_}"
-    defaults read "$domain" > "$dir/$safe.txt" 2>/dev/null || true
+    defaults read "$domain" >"$dir/$safe.txt" 2>/dev/null || true
   done
 
   # Combined sorted view for whole-system diffs
-  cat "$dir"/*.txt 2>/dev/null | sort > "$dir/_combined_sorted.txt" || true
+  cat "$dir"/*.txt 2>/dev/null | sort >"$dir/_combined_sorted.txt" || true
 
   ok "Snapshot '$label' saved ($(ls "$dir"/*.txt 2>/dev/null | wc -l | tr -d ' ') domains)"
 }
@@ -65,21 +71,28 @@ diff_snapshots() {
   local a="$1" b="$2"
   local fa="$SNAP_DIR/$a/_combined_sorted.txt"
   local fb="$SNAP_DIR/$b/_combined_sorted.txt"
-  [[ -f "$fa" ]] || { warn "No snapshot '$a'"; exit 1; }
-  [[ -f "$fb" ]] || { warn "No snapshot '$b'"; exit 1; }
+  [[ -f "$fa" ]] || {
+    warn "No snapshot '$a'"
+    exit 1
+  }
+  [[ -f "$fb" ]] || {
+    warn "No snapshot '$b'"
+    exit 1
+  }
   info "Diff $a -> $b  (lines only in $b are likely your changes)"
   echo
   # Per-domain diff so you see WHICH app's domain changed, not just values
   for f in "$SNAP_DIR/$b"/*.txt; do
-    local name; name="$(basename "$f")"
+    local name
+    name="$(basename "$f")"
     [[ "$name" == "_combined_sorted.txt" ]] && continue
     local old="$SNAP_DIR/$a/$name"
     if [[ -f "$old" ]]; then
       if ! diff -q "$old" "$f" >/dev/null 2>&1; then
         printf "${PURPLE}### %s${RESET}\n" "${name%.txt}"
-        diff "$old" "$f" \
-          | sed 's/^< /  '"$(printf '\033[38;2;247;118;142m')"'- /; s/^> /  '"$(printf '\033[38;2;158;206;106m')"'+ /' \
-          | sed 's/$/'"$(printf '\033[0m')"'/'
+        diff "$old" "$f" |
+          sed 's/^< /  '"$(printf '\033[38;2;247;118;142m')"'- /; s/^> /  '"$(printf '\033[38;2;158;206;106m')"'+ /' |
+          sed 's/$/'"$(printf '\033[0m')"'/'
         echo
       fi
     else
@@ -128,12 +141,12 @@ export_bundle() {
   )
   mkdir -p "$out/defaults"
   for d in "${domains[@]}"; do
-    defaults export "$d" "$out/defaults/$d.plist" 2>/dev/null \
-      && ok "exported $d" || warn "could not export $d"
+    defaults export "$d" "$out/defaults/$d.plist" 2>/dev/null &&
+      ok "exported $d" || warn "could not export $d"
   done
 
   # 3. Restore script for a fresh Mac.
-  cat > "$out/restore.sh" <<'RESTORE'
+  cat >"$out/restore.sh" <<'RESTORE'
 #!/usr/bin/env bash
 set -euo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -153,14 +166,22 @@ RESTORE
   printf "\n${DIM}Edit the 'domains' list in this script to add what your diffs revealed,\nthen commit %s to your dotfiles repo.\nNote: some settings live outside 'defaults' (app DBs, keychain, sudo-gated)\nand will not be captured.${RESET}\n" "$out"
 }
 
-cmd="${1:-}"; shift || true
+cmd="${1:-}"
+shift || true
 case "$cmd" in
-  snapshot) take_snapshot "${1:-}";;
-  list)     list_snapshots;;
-  diff)     [[ $# -ge 2 ]] || { warn "usage: diff A B"; exit 1; }; diff_snapshots "$1" "$2";;
-  watch)    watch_change;;
-  export)   export_bundle "${1:-}";;
-  *) cat <<USAGE
+  snapshot) take_snapshot "${1:-}" ;;
+  list) list_snapshots ;;
+  diff)
+    [[ $# -ge 2 ]] || {
+      warn "usage: diff A B"
+      exit 1
+    }
+    diff_snapshots "$1" "$2"
+    ;;
+  watch) watch_change ;;
+  export) export_bundle "${1:-}" ;;
+  *)
+    cat <<USAGE
 mac-snapshot.sh: capture/diff/export macOS settings
 
   snapshot [label]   Take a snapshot (default label = timestamp)
@@ -177,5 +198,5 @@ Workflows:
                                   ./mac-snapshot.sh diff baseline now
   Export everything to a repo:    ./mac-snapshot.sh export ~/dotfiles/mac
 USAGE
-  ;;
+    ;;
 esac

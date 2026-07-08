@@ -34,11 +34,11 @@ banner() {
   printf "${BG}${PURPLE}${BOLD}    OmacOS: opinionated macOS, Tokyo Night       ${RESET}\n"
   printf "${BG}${PURPLE}${BOLD}                                                  ${RESET}\n\n"
 }
-step()  { printf "\n${PURPLE}==[ %s ]==${RESET}\n" "$1"; }
-info()  { printf "${BLUE}==>${RESET} %s\n" "$1"; }
-ok()    { printf "${GREEN} ok${RESET} %s\n" "$1"; }
-warn()  { printf "${RED} !! ${RESET}%s\n" "$1"; }
-note()  { printf "${PURPLE} MANUAL${RESET} %s\n" "$1"; }
+step() { printf "\n${PURPLE}==[ %s ]==${RESET}\n" "$1"; }
+info() { printf "${BLUE}==>${RESET} %s\n" "$1"; }
+ok() { printf "${GREEN} ok${RESET} %s\n" "$1"; }
+warn() { printf "${RED} !! ${RESET}%s\n" "$1"; }
+note() { printf "${PURPLE} MANUAL${RESET} %s\n" "$1"; }
 
 # --- Guards ------------------------------------------------------------------
 if [[ "$(uname -s)" != "Darwin" ]]; then
@@ -56,7 +56,11 @@ fi
 sudo -v
 # Refresh the sudo timestamp every 60s until this script exits (covers long
 # steps like Homebrew and the Neovim bootstrap, and the FDA grant wait).
-( while true; do sudo -n true 2>/dev/null; sleep 60; kill -0 "$$" 2>/dev/null || exit; done ) &
+(while true; do
+  sudo -n true 2>/dev/null
+  sleep 60
+  kill -0 "$$" 2>/dev/null || exit
+done) &
 SUDO_KEEPALIVE_PID=$!
 trap 'kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true' EXIT
 
@@ -87,11 +91,14 @@ for a in "$@"; do
   case "$a" in
     --copy) LINK_MODE="copy" ;;
     --symlink) LINK_MODE="symlink" ;;
-    -h|--help)
+    -h | --help)
       sed -n '3,17p' "$0"
       exit 0
       ;;
-    *) warn "Unknown arg: $a"; exit 2 ;;
+    *)
+      warn "Unknown arg: $a"
+      exit 2
+      ;;
   esac
 done
 
@@ -100,7 +107,7 @@ OMACOS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export OMACOS_ROOT
 STATE_DIR="$HOME/.config/omacos"
 mkdir -p "$STATE_DIR"
-echo "$OMACOS_ROOT" > "$STATE_DIR/root"
+echo "$OMACOS_ROOT" >"$STATE_DIR/root"
 
 TS="$(date +%Y%m%d-%H%M%S)"
 MANUAL_STEPS=()
@@ -145,7 +152,8 @@ add_manual "If Xcode CLT prompt appeared, ensure it finished. AeroSpace also nee
 # --- 2. Homebrew ------------------------------------------------------------
 step "Homebrew"
 bash "$OMACOS_ROOT/install/homebrew.sh"
-if [[ -x /opt/homebrew/bin/brew ]]; then eval "$(/opt/homebrew/bin/brew shellenv)"
+if [[ -x /opt/homebrew/bin/brew ]]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
 elif [[ -x /usr/local/bin/brew ]]; then eval "$(/usr/local/bin/brew shellenv)"; fi
 
 # --- 3. Packages ------------------------------------------------------------
@@ -190,10 +198,10 @@ add_manual "Open Docker Desktop once to finish setup"
 
 # --- 10. Configs -------------------------------------------------------------
 step "Configs (${LINK_MODE})"
-link_or_copy "$OMACOS_ROOT/config/aerospace.toml"     "$HOME/.config/aerospace/aerospace.toml"
-link_or_copy "$OMACOS_ROOT/config/ghostty.config"     "$HOME/.config/ghostty/config"
-link_or_copy "$OMACOS_ROOT/config/tmux.conf"          "$HOME/.tmux.conf"
-link_or_copy "$OMACOS_ROOT/config/nvim"               "$HOME/.config/nvim"
+link_or_copy "$OMACOS_ROOT/config/aerospace.toml" "$HOME/.config/aerospace/aerospace.toml"
+link_or_copy "$OMACOS_ROOT/config/ghostty.config" "$HOME/.config/ghostty/config"
+link_or_copy "$OMACOS_ROOT/config/tmux.conf" "$HOME/.tmux.conf"
+link_or_copy "$OMACOS_ROOT/config/nvim" "$HOME/.config/nvim"
 
 # Tmux plugins (TPM + resurrect + continuum). Runs AFTER tmux.conf is linked
 # so install_plugins.sh can read the @plugin entries from ~/.tmux.conf.
@@ -224,7 +232,10 @@ if command -v nvim >/dev/null 2>&1; then
       [[ -f "$mason_pkg_dir/$s/mason-receipt.json" ]] || mason_missing+=("$s")
     done
     [[ ${#mason_missing[@]} -eq 0 ]] && break
-    [[ $attempt -lt 3 ]] && { warn "Mason: retrying ${#mason_missing[@]} package(s): ${mason_missing[*]}"; sleep 3; }
+    [[ $attempt -lt 3 ]] && {
+      warn "Mason: retrying ${#mason_missing[@]} package(s): ${mason_missing[*]}"
+      sleep 3
+    }
   done
   if [[ ${#mason_missing[@]} -eq 0 ]]; then
     ok "All LSP servers installed"

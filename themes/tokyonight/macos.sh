@@ -6,11 +6,14 @@
 #
 set -euo pipefail
 
-BLUE=$'\033[38;2;122;162;247m'; PURPLE=$'\033[38;2;187;154;247m'
-GREEN=$'\033[38;2;158;206;106m'; DIM=$'\033[38;2;86;95;137m'; RESET=$'\033[0m'
-info(){ printf "%s==>%s %s\n" "$BLUE" "$RESET" "$1"; }
-ok(){   printf "%s ok%s %s\n" "$GREEN" "$RESET" "$1"; }
-note(){ printf "%s MANUAL%s %s\n" "$PURPLE" "$RESET" "$1"; }
+BLUE=$'\033[38;2;122;162;247m'
+PURPLE=$'\033[38;2;187;154;247m'
+GREEN=$'\033[38;2;158;206;106m'
+DIM=$'\033[38;2;86;95;137m'
+RESET=$'\033[0m'
+info() { printf "%s==>%s %s\n" "$BLUE" "$RESET" "$1"; }
+ok() { printf "%s ok%s %s\n" "$GREEN" "$RESET" "$1"; }
+note() { printf "%s MANUAL%s %s\n" "$PURPLE" "$RESET" "$1"; }
 
 info "Applying Tokyo Night macOS overlay"
 
