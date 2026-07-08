@@ -90,6 +90,12 @@ awk -v o="$hosts_open" -v c="$hosts_close" '
   for h in "${blocked_hosts[@]}"; do printf "0.0.0.0 %s\n:: %s\n" "$h" "$h"; done
   echo "$hosts_close"
 } >>"$blocked_tmp"
+if [[ ! -s "$blocked_tmp" ]]; then
+  warn "/etc/hosts transform produced empty output; aborting hosts rewrite"
+  rm -f "$blocked_tmp"
+  exit 1
+fi
+sudo cp /etc/hosts "/etc/hosts.bak.$(date +%Y%m%d-%H%M%S)"
 # shellcheck disable=SC2024
 sudo tee /etc/hosts <"$blocked_tmp" >/dev/null
 rm -f "$blocked_tmp"
