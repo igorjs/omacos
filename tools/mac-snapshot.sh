@@ -59,11 +59,12 @@ take_snapshot() {
   # Combined sorted view for whole-system diffs
   cat "$dir"/*.txt 2>/dev/null | sort >"$dir/_combined_sorted.txt" || true
 
-  ok "Snapshot '$label' saved ($(ls "$dir"/*.txt 2>/dev/null | wc -l | tr -d ' ') domains)"
+  ok "Snapshot '$label' saved ($(find "$dir" -maxdepth 1 -name '*.txt' 2>/dev/null | wc -l | tr -d ' ') domains)"
 }
 
 list_snapshots() {
   info "Saved snapshots in $SNAP_DIR:"
+  # shellcheck disable=SC2012
   ls -1 "$SNAP_DIR" 2>/dev/null | sed 's/^/  /' || echo "  (none)"
 }
 
@@ -105,12 +106,12 @@ watch_change() {
   local before="_watch_before" after="_watch_after"
   take_snapshot "$before"
   echo
-  printf "${PURPLE}Now change ONE setting in System Settings, then press Enter...${RESET}"
+  printf '%b' "${PURPLE}Now change ONE setting in System Settings, then press Enter...${RESET}"
   read -r _
   take_snapshot "$after"
   echo
   diff_snapshots "$before" "$after"
-  printf "\n${DIM}Tip: the domain header above is the 'defaults write <domain> <key>' target.${RESET}\n"
+  printf '%b' "\n${DIM}Tip: the domain header above is the 'defaults write <domain> <key>' target.${RESET}\n"
 }
 
 export_bundle() {
@@ -141,8 +142,11 @@ export_bundle() {
   )
   mkdir -p "$out/defaults"
   for d in "${domains[@]}"; do
-    defaults export "$d" "$out/defaults/$d.plist" 2>/dev/null &&
-      ok "exported $d" || warn "could not export $d"
+    if defaults export "$d" "$out/defaults/$d.plist" 2>/dev/null; then
+      ok "exported $d"
+    else
+      warn "could not export $d"
+    fi
   done
 
   # 3. Restore script for a fresh Mac.

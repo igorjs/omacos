@@ -23,7 +23,7 @@ else
   info "Installing Xcode Command Line Tools (a system GUI dialog will appear)"
   /usr/bin/xcode-select --install >/dev/null 2>&1 || true
   # The CLT installer is asynchronous; poll until xcode-select -p succeeds.
-  printf "${BLUE}    waiting for Xcode CLT install to finish (Cmd-Q the installer if it hangs):${RESET}\n"
+  printf '%b' "${BLUE}    waiting for Xcode CLT install to finish (Cmd-Q the installer if it hangs):${RESET}\n"
   tries=0
   until /usr/bin/xcode-select -p >/dev/null 2>&1; do
     sleep 10

@@ -31,9 +31,12 @@ fi
 
 # Make sure future zsh sessions can find brew too. Idempotent: only append once.
 zprofile="$HOME/.zprofile"
+# shellcheck disable=SC2016
 brew_line='eval "$(/opt/homebrew/bin/brew shellenv)"'
-[[ -x /usr/local/bin/brew && ! -x /opt/homebrew/bin/brew ]] &&
+if [[ -x /usr/local/bin/brew && ! -x /opt/homebrew/bin/brew ]]; then
+  # shellcheck disable=SC2016
   brew_line='eval "$(/usr/local/bin/brew shellenv)"'
+fi
 
 if ! grep -qsF "$brew_line" "$zprofile" 2>/dev/null; then
   printf "\n# OmacOS: load Homebrew\n%s\n" "$brew_line" >>"$zprofile"

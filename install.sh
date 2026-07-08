@@ -30,9 +30,9 @@ BOLD='\033[1m'
 RESET='\033[0m'
 
 banner() {
-  printf "\n${BG}${PURPLE}${BOLD}                                                  ${RESET}\n"
-  printf "${BG}${PURPLE}${BOLD}    OmacOS: opinionated macOS, Tokyo Night       ${RESET}\n"
-  printf "${BG}${PURPLE}${BOLD}                                                  ${RESET}\n\n"
+  printf '%b' "\n${BG}${PURPLE}${BOLD}                                                  ${RESET}\n"
+  printf '%b' "${BG}${PURPLE}${BOLD}    OmacOS: opinionated macOS, Tokyo Night       ${RESET}\n"
+  printf '%b' "${BG}${PURPLE}${BOLD}                                                  ${RESET}\n\n"
 }
 step() { printf "\n${PURPLE}==[ %s ]==${RESET}\n" "$1"; }
 info() { printf "${BLUE}==>${RESET} %s\n" "$1"; }
@@ -74,13 +74,13 @@ check_full_disk_access() {
 }
 
 if ! check_full_disk_access; then
-  printf "\n${YELLOW:-}⚠️  Full Disk Access required${RESET}\n"
+  printf '%b' "\n${YELLOW:-}⚠️  Full Disk Access required${RESET}\n"
   printf "Some installation steps need Full Disk Access for your terminal.\n\n"
   printf "Opening System Settings → Privacy & Security → Full Disk Access...\n\n"
   open "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles"
-  printf "1. Find ${BOLD:-}Terminal${RESET} (or your terminal app) in the list\n"
+  printf '%b' "1. Find ${BOLD:-}Terminal${RESET} (or your terminal app) in the list\n"
   printf "2. Enable the toggle\n"
-  printf "3. Press ${BOLD:-}Enter${RESET} here to continue\n\n"
+  printf '%b' "3. Press ${BOLD:-}Enter${RESET} here to continue\n\n"
   read -r -p "Press Enter once Full Disk Access is granted... "
   printf "\n"
 fi
@@ -284,8 +284,8 @@ add_manual "Log out and back in for key repeat, locale, and input source to full
 # --- Summary -----------------------------------------------------------------
 step "Done"
 ok "OmacOS bootstrap finished."
-printf "\n${PURPLE}MANUAL steps to finish your setup:${RESET}\n"
+printf '%b' "\n${PURPLE}MANUAL steps to finish your setup:${RESET}\n"
 for s in "${MANUAL_STEPS[@]}"; do
   printf "  ${DIM}-${RESET} %s\n" "$s"
 done
-printf "\nRun ${BLUE}omacos doctor${RESET} to verify everything.\n"
+printf '%b' "\nRun ${BLUE}omacos doctor${RESET} to verify everything.\n"

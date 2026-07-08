@@ -90,6 +90,7 @@ awk -v o="$hosts_open" -v c="$hosts_close" '
   for h in "${blocked_hosts[@]}"; do printf "0.0.0.0 %s\n:: %s\n" "$h" "$h"; done
   echo "$hosts_close"
 } >>"$blocked_tmp"
+# shellcheck disable=SC2024
 sudo tee /etc/hosts <"$blocked_tmp" >/dev/null
 rm -f "$blocked_tmp"
 sudo dscacheutil -flushcache 2>/dev/null || true
@@ -170,6 +171,7 @@ sp_plist="$(mktemp -t omacos.system.preferences)" || sp_plist="/tmp/omacos.syste
 if security authorizationdb read system.preferences >"$sp_plist" 2>/dev/null; then
   if /usr/libexec/PlistBuddy -c "Print :shared" "$sp_plist" >/dev/null 2>&1; then
     /usr/libexec/PlistBuddy -c "Set :shared false" "$sp_plist" >/dev/null 2>&1
+    # shellcheck disable=SC2024
     if sudo security authorizationdb write system.preferences <"$sp_plist" 2>/dev/null; then
       ok "Admin password required for system-wide settings"
     else
