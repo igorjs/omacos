@@ -35,7 +35,11 @@ set_if_unset init.defaultBranch       "main"
 set_if_unset pull.rebase              "true"
 set_if_unset push.autoSetupRemote     "true"
 set_if_unset core.editor              "zed --wait"
-set_if_unset gpg.ssh.program          "/opt/homebrew/bin/ssh-keygen"
+# Derive ssh-keygen: prefer system command (works on Intel + arm64);
+# fall back to brew --prefix for Homebrew-managed installs.
+_ssh_keygen=$(command -v ssh-keygen 2>/dev/null || echo "$(brew --prefix)/bin/ssh-keygen")
+set_if_unset gpg.ssh.program          "$_ssh_keygen"
+unset _ssh_keygen
 
 # --- Identity ---------------------------------------------------------------
 GIT_USER_NAME="${GIT_USER_NAME:-$(git config --global --get user.name 2>/dev/null || true)}"
