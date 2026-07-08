@@ -38,12 +38,14 @@ fi
 mise settings set rust.components "rustfmt,clippy,rust-analyzer,rust-src" 2>/dev/null || true
 ok "Rust components set: rustfmt, clippy, rust-analyzer, rust-src"
 
-# --- Install + pin global runtimes (channel aliases self-track) ------------
+# --- Install + pin global runtimes (concrete versions for reproducibility) ---
+# Bump these intentionally when upgrading; avoid floating aliases (lts/latest/stable)
+# so installs are reproducible across machines. Keep .mise.toml sample in sync.
 declare -a tools=(
-  "node@lts"
-  "python@latest"
-  "go@latest"
-  "rust@stable"
+  "node@22"
+  "python@3.13"
+  "go@1.24"
+  "rust@1.85"
 )
 
 for t in "${tools[@]}"; do
