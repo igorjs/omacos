@@ -23,10 +23,10 @@ Initial release.
 - `install/tmux.sh` — TPM clone and headless plugin install (resurrect + continuum)
 
 **macOS**
-- `macos/appearance.sh` — Dark Mode, accent color (Purple), highlight color
-- `macos/dock.sh` — Dock size, position, auto-hide, hot corners
-- `macos/input.sh` — key repeat, trackpad, natural scrolling
-- `macos/locale.sh` — locale, timezone, keyboard layout
+- `macos/appearance.sh` — Dark Mode, accent color (Blue), highlight color
+- `macos/dock.sh` — Dock size, position, auto-hide
+- `macos/input.sh` — key repeat, trackpad
+- `macos/locale.sh` — locale, keyboard layout
 - `macos/defaults.sh` — Finder, screenshots, global UI, Stage Manager off, widgets off
 - `macos/keyboard.sh` — disables conflicting system shortcuts (Mission Control Ctrl+Up/Down, Space-switching Ctrl+Left/Right) via PlistBuddy
 - `macos/security.sh` — firewall stealth mode, SSH/Remote Apple Events off, Siri off, analytics/advertising opt-outs, screen lock, AirDrop/Handoff off, iCloud local default
