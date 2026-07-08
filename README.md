@@ -62,10 +62,10 @@ Or, to copy config files instead of symlinking them:
 - ripgrep, fd, fzf, jq, bat, eza, zoxide, lazygit, gh
 
 ### Languages (via mise)
-- Node.js LTS
-- Python (latest, plus uv for package management)
-- Go (latest)
-- Rust (stable, with rustfmt, clippy, rust-analyzer, rust-src)
+- Node.js 22 (LTS)
+- Python 3.13 (plus uv for package management)
+- Go 1.24
+- Rust 1.85 (with rustfmt, clippy, rust-analyzer, rust-src)
 
 ### Containers
 - **Docker Desktop** - note: requires one manual launch to complete setup
@@ -208,6 +208,12 @@ cp ~/omacos/.mise.toml myproject/.mise.toml
 
 mise activates automatically on `cd` into a directory with a `.mise.toml`.
 
+### Reproducibility
+
+Runtime versions are pinned in `install/languages.sh` (concrete versions, not floating aliases like `lts` or `latest`). The Neovim plugin lockfile (`config/nvim/lazy-lock.json`) is version-controlled; run `:Lazy sync` to update it, then commit the change intentionally.
+
+The Brewfile deliberately floats to the latest formula versions — Homebrew has no general Brewfile version lock. Package versions are not pinned; re-running the install may pick up newer releases. This is an accepted trade-off for keeping the toolchain current.
+
 ### uv for Python packages
 
 Rather than `pip install`, use [uv](https://docs.astral.sh/uv/) for fast, reproducible Python package management:
@@ -227,6 +233,8 @@ mise installs Rust via rustup. The rust-analyzer component is included, so it wo
 ## Known Quirks
 
 - **TPM plugin install focus**: After pressing `prefix+I` to install tmux plugins, the "Done, press ENTER" screen requires a mouse click before Enter works. This is a macOS window-focus edge case triggered by TPM's install overlay. It only happens during plugin installation (once per machine).
+
+- **Full Disk Access prompt during install**: `install.sh` checks for Full Disk Access and pauses if it is not granted. Open System Settings > Privacy and Security > Full Disk Access, enable the terminal running the install, then press Enter to continue.
 
 - **security.sh requires sudo**: `macos/security.sh` (firewall, SSH, mDNS) needs `sudo`. If running in a non-interactive context where sudo isn't pre-authenticated, it will prompt. Run `sudo -v` first or execute it manually: `bash macos/security.sh`.
 
