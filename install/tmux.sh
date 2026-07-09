@@ -9,16 +9,8 @@
 #
 set -euo pipefail
 
-# --- Tokyo Night colors ------------------------------------------------------
-BLUE='\033[38;2;122;162;247m'
-GREEN='\033[38;2;158;206;106m'
-PURPLE='\033[38;2;187;154;247m'
-RED='\033[38;2;247;118;142m'
-RESET='\033[0m'
-info() { printf "${BLUE}==>${RESET} %s\n" "$1"; }
-ok() { printf "${GREEN} ok${RESET} %s\n" "$1"; }
-note() { printf "${PURPLE} -- ${RESET}%s\n" "$1"; }
-warn() { printf "${RED} !! ${RESET}%s\n" "$1"; }
+# shellcheck source=lib/common.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../lib/common.sh"
 
 if ! command -v tmux >/dev/null 2>&1; then
   warn "tmux is not installed — skipping TPM setup. Re-run after 'brew bundle'."
