@@ -307,8 +307,89 @@ apply_state() {
   done
 }
 
-plan_defaults() { note "TODO(WU-27): defaults import from baseline (whole-domain)"; }
-apply_defaults() { note "TODO(WU-27): apply defaults tier"; }
+plan_defaults() {
+  local baseline="${OMACOS_BASELINE_DIR}"
+
+  local plist_count
+  plist_count="$(find "$baseline" -maxdepth 1 -name '*.plist' 2>/dev/null | wc -l | tr -d ' ')"
+  if [[ ! -d "$baseline" || "$plist_count" == "0" ]]; then
+    warn "no baseline found at $baseline; nothing to restore"
+    return 0
+  fi
+
+  local plist base stem domain
+  while IFS= read -r plist; do
+    base="$(basename "$plist")"
+    stem="${base%.plist}"
+
+    if [[ "$base" == "byhost.NSGlobalDomain.plist" ]]; then
+      note "import (byhost global -g) NSGlobalDomain from $plist"
+    elif [[ "$base" == byhost.* ]]; then
+      domain="${stem#byhost.}"
+      note "import (byhost) $domain from $plist"
+    elif [[ "$base" == "NSGlobalDomain.plist" ]]; then
+      note "import (global -g) NSGlobalDomain from $plist"
+    elif [[ "$stem" == _* ]]; then
+      domain="$(printf '%s' "$stem" | tr '_' '/')"
+      note "import (system, sudo) $domain from $plist"
+    else
+      note "import (user domain) $stem from $plist"
+    fi
+  done < <(find "$baseline" -maxdepth 1 -name '*.plist')
+
+  warn "WHOLE-DOMAIN restore: 'defaults import' replaces the ENTIRE domain, reverting ANY change made to these domains since install; the baseline is pre-OmacOS-writes state, not macOS factory defaults."
+}
+
+apply_defaults() {
+  local baseline="${OMACOS_BASELINE_DIR}"
+
+  local plist_count
+  plist_count="$(find "$baseline" -maxdepth 1 -name '*.plist' 2>/dev/null | wc -l | tr -d ' ')"
+  if [[ ! -d "$baseline" || "$plist_count" == "0" ]]; then
+    warn "no baseline found at $baseline; nothing to restore"
+    return 0
+  fi
+
+  local plist base stem domain
+  while IFS= read -r plist; do
+    base="$(basename "$plist")"
+    stem="${base%.plist}"
+
+    if [[ "$base" == "byhost.NSGlobalDomain.plist" ]]; then
+      if defaults -currentHost import -g "$plist"; then
+        ok "Restored byhost NSGlobalDomain from $plist"
+      else
+        warn "could not import byhost NSGlobalDomain"
+      fi
+    elif [[ "$base" == byhost.* ]]; then
+      domain="${stem#byhost.}"
+      if defaults -currentHost import "$domain" "$plist"; then
+        ok "Restored byhost $domain from $plist"
+      else
+        warn "could not import $domain"
+      fi
+    elif [[ "$base" == "NSGlobalDomain.plist" ]]; then
+      if defaults import -g "$plist"; then
+        ok "Restored NSGlobalDomain from $plist"
+      else
+        warn "could not import NSGlobalDomain"
+      fi
+    elif [[ "$stem" == _* ]]; then
+      domain="$(printf '%s' "$stem" | tr '_' '/')"
+      if sudo defaults import "$domain" "$plist"; then
+        ok "Restored system domain $domain from $plist"
+      else
+        warn "could not import $domain"
+      fi
+    else
+      if defaults import "$stem" "$plist"; then
+        ok "Restored user domain $stem from $plist"
+      else
+        warn "could not import $stem"
+      fi
+    fi
+  done < <(find "$baseline" -maxdepth 1 -name '*.plist')
+}
 
 plan_packages() { note "TODO(WU-28): brew rm OmacOS-added packages"; }
 apply_packages() { note "TODO(WU-28): apply packages tier"; }
