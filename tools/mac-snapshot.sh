@@ -25,15 +25,8 @@ set -euo pipefail
 SNAP_DIR="${MAC_SNAPSHOT_DIR:-$HOME/.mac-snapshots}"
 mkdir -p "$SNAP_DIR"
 
-BLUE='\033[38;2;122;162;247m'
-GREEN='\033[38;2;158;206;106m'
-RED='\033[38;2;247;118;142m'
-PURPLE='\033[38;2;187;154;247m'
-DIM='\033[38;2;86;95;137m'
-RESET='\033[0m'
-info() { printf "${BLUE}==>${RESET} %s\n" "$1"; }
-ok() { printf "${GREEN} ok${RESET} %s\n" "$1"; }
-warn() { printf "${RED} !! ${RESET}%s\n" "$1"; }
+# shellcheck source=lib/common.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../lib/common.sh"
 
 if [[ "$(uname -s)" != "Darwin" ]]; then
   warn "macOS only."
