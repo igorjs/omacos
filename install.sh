@@ -202,7 +202,7 @@ bash "$OMACOS_ROOT/install/tmux.sh"
 # Zed: write settings and install extensions.
 bash "$OMACOS_ROOT/install/zed.sh"
 
-# --- 10. Neovim bootstrap (headless: plugins + treesitter + LSP servers) ----
+# --- 11. Neovim bootstrap (headless: plugins + treesitter + LSP servers) ----
 step "Neovim bootstrap"
 if command -v nvim >/dev/null 2>&1; then
   info "Installing plugins (this may take a minute)"
@@ -243,7 +243,7 @@ else
   warn "nvim not on PATH; skipping bootstrap"
 fi
 
-# --- 11. macOS defaults ------------------------------------------------------
+# --- 12. macOS defaults ------------------------------------------------------
 step "macOS appearance, Dock, input, locale"
 bash "$OMACOS_ROOT/macos/appearance.sh"
 bash "$OMACOS_ROOT/macos/accessibility.sh"
@@ -257,7 +257,7 @@ bash "$OMACOS_ROOT/macos/battery.sh"
 bash "$OMACOS_ROOT/macos/security.sh"
 bash "$OMACOS_ROOT/macos/safari.sh"
 
-# --- 12. Apply theme --------------------------------------------------------
+# --- 13. Apply theme --------------------------------------------------------
 step "Theme"
 "$OMACOS_ROOT/bin/omacos" theme set tokyonight
 
