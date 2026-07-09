@@ -4,12 +4,10 @@
 # tests/hosts_block.bats — unit tests for hosts_block_transform() and
 # managed_block_strip() in lib/common.sh
 #
-# Note: both functions use `awk -v close="..."`.  The identifier `close` is a
-# reserved built-in in POSIX awk (and in every implementation tested: macOS
-# one-true-awk, gawk, mawk).  Tests that depend on the awk pass-through
-# outputting the original host-file lines are skipped on platforms where the
-# reserved-name check fires.  A helper function is used to detect this at
-# runtime so the skip is accurate and self-documenting.
+# Both functions previously used `awk -v close="..."`. The identifier `close`
+# is a reserved built-in in POSIX awk (macOS one-true-awk, gawk, mawk all
+# reject it), so those calls were a syntax error on the real target platform.
+# lib/common.sh now uses omark/cmark, so these tests run everywhere.
 
 setup() {
   TEST_HOME="$(mktemp -d)"
@@ -22,11 +20,6 @@ setup() {
 
 teardown() {
   rm -rf "$TEST_HOME"
-}
-
-# Returns 0 if the local awk allows `close` as a -v variable name, 1 otherwise.
-_awk_supports_close_var() {
-  printf 'test\n' | awk -v close="test" '$0 == close { print }' >/dev/null 2>&1
 }
 
 # --- hosts_block_transform ---------------------------------------------------
@@ -45,10 +38,7 @@ _awk_supports_close_var() {
   [[ "$output" == *"$CLOSE"* ]]
 }
 
-@test "hosts_block_transform: no existing block → original lines preserved (requires working awk)" {
-  if ! _awk_supports_close_var; then
-    skip "system awk treats 'close' as reserved; hosts_block_transform cannot pass through original lines"
-  fi
+@test "hosts_block_transform: no existing block → original lines preserved" {
   local hosts="$TEST_HOME/hosts"
   local domains="$TEST_HOME/domains"
   printf '127.0.0.1 localhost\n' >"$hosts"
@@ -78,10 +68,7 @@ _awk_supports_close_var() {
   [ "$open_count" -eq 1 ]
 }
 
-@test "hosts_block_transform: custom user lines preserved (requires working awk)" {
-  if ! _awk_supports_close_var; then
-    skip "system awk treats 'close' as reserved; hosts_block_transform cannot preserve user lines"
-  fi
+@test "hosts_block_transform: custom user lines preserved" {
   local hosts="$TEST_HOME/hosts"
   local domains="$TEST_HOME/domains"
   printf '127.0.0.1 localhost\n192.168.1.10 myserver\n' >"$hosts"
@@ -115,10 +102,7 @@ _awk_supports_close_var() {
 
 # --- managed_block_strip -----------------------------------------------------
 
-@test "managed_block_strip: block present → stripped, surrounding lines intact (requires working awk)" {
-  if ! _awk_supports_close_var; then
-    skip "system awk treats 'close' as reserved; managed_block_strip cannot selectively strip"
-  fi
+@test "managed_block_strip: block present → stripped, surrounding lines intact" {
   local file="$TEST_HOME/zshrc"
   printf 'before\n%s\nblock content\n%s\nafter\n' "$OPEN" "$CLOSE" >"$file"
 

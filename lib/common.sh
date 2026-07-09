@@ -56,20 +56,30 @@ managed_block_strip() {
     fi
     local tmp
     tmp="$(mktemp)"
-    awk -v open="$open" -v close="$close" '
-      $0 == open { skip=1; next }
-      $0 == close { skip=0; next }
+    # 'close' is a reserved awk built-in, so `awk -v close=` is a syntax error
+    # on BSD/macOS awk (and gawk). Use omark/cmark. Guard the awk result so a
+    # failure never truncates the file to empty via the redirect + mv.
+    if awk -v omark="$open" -v cmark="$close" '
+      $0 == omark { skip=1; next }
+      $0 == cmark { skip=0; next }
       !skip { print }
-    ' "$file" >"$tmp"
-    mv "$tmp" "$file"
+    ' "$file" >"$tmp"; then
+      mv "$tmp" "$file"
+    else
+      rm -f "$tmp"
+      warn "managed_block_strip: awk failed on $file; leaving unchanged"
+      return 1
+    fi
   fi
 }
 
 hosts_block_transform() {
   local hosts="$1" open="$2" close="$3" domains="$4"
-  awk -v open="$open" -v close="$close" '
-    $0 == open { skip=1; next }
-    $0 == close { skip=0; next }
+  # 'close' is a reserved awk built-in, so `awk -v close=` is a syntax error on
+  # BSD/macOS awk (and gawk). Use omark/cmark instead.
+  awk -v omark="$open" -v cmark="$close" '
+    $0 == omark { skip=1; next }
+    $0 == cmark { skip=0; next }
     !skip { print }
   ' "$hosts"
   printf '%s\n' "$open"

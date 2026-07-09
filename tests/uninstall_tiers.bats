@@ -10,16 +10,10 @@
 # Note on set options: sourcing install/uninstall.sh runs `set -euo pipefail`.
 # We undo -u and pipefail (they can trip on test-local undefined vars and
 # benign pipe failures) but KEEP -e so that bats' ERR-trap-based assertion
-# mechanism continues to work.  Direct calls to functions that may fail
-# internally (e.g. apply_configs, which calls managed_block_strip → awk)
-# are suffixed with `|| true` to absorb the non-zero exit without aborting the
-# test while still allowing subsequent assertions to be enforced by -e.
+# mechanism continues to work.
 #
-# The `close` variable name used in lib/common.sh's awk programs is a reserved
-# built-in identifier in all major awk implementations; managed_block_strip
-# therefore fails on the awk line.  apply_configs' managed-block stripping
-# is not asserted here for that reason — the symlink-removal and
-# state-directory paths are fully hermetic and are what we verify.
+# managed_block_strip's awk programs use omark/cmark (not the reserved awk
+# built-in `close`), so the managed-block stripping is asserted directly.
 
 setup() {
   TEST_HOME="$(mktemp -d)"
@@ -59,11 +53,7 @@ teardown() {
   mkdir -p "$OMACOS_HOME/.config/ghostty"
   ln -s "/usr/local/etc/ghostty.config" "$OMACOS_HOME/.config/ghostty/config"
 
-  # apply_configs calls managed_block_strip (which uses awk -v close=…).
-  # awk treats 'close' as a reserved identifier → exits non-zero.  The || true
-  # absorbs that so the test can proceed to assert the symlink outcomes, which
-  # are fully hermetic.
-  apply_configs || true
+  apply_configs
 
   # Repo-owned symlink removed
   [ ! -e "$OMACOS_HOME/.config/aerospace/aerospace.toml" ]
@@ -71,10 +61,7 @@ teardown() {
   [ -L "$OMACOS_HOME/.config/ghostty/config" ]
 }
 
-@test "apply_configs: managed block stripped when awk supports close variable" {
-  if ! printf 'x\n' | awk -v close="x" '$0 == close { print }' >/dev/null 2>&1; then
-    skip "system awk treats 'close' as reserved; managed_block_strip cannot strip selectively"
-  fi
+@test "apply_configs: managed block stripped from .zshrc, surrounding lines intact" {
   printf 'user_before\n# >>> omacos >>>\nblocked\n# <<< omacos <<<\nuser_after\n' \
     >"$OMACOS_HOME/.zshrc"
 
