@@ -75,6 +75,21 @@ teardown() {
   [ "$status" -eq 0 ]
 }
 
+@test "apply_configs: restores a directory backup by replacing the target, not nesting" {
+  # OmacOS-placed copy at ~/.config/nvim; user's original at ~/.config/nvim.bak.*
+  mkdir -p "$OMACOS_HOME/.config/nvim"
+  printf 'OMACOS_COPY\n' >"$OMACOS_HOME/.config/nvim/init.lua"
+  mkdir -p "$OMACOS_HOME/.config/nvim.bak.20260101-000000"
+  printf 'USER_ORIGINAL\n' >"$OMACOS_HOME/.config/nvim.bak.20260101-000000/init.lua"
+
+  apply_configs
+
+  # Target replaced with the user's original; backup consumed; nothing nested.
+  [ "$(cat "$OMACOS_HOME/.config/nvim/init.lua")" = "USER_ORIGINAL" ]
+  [ ! -e "$OMACOS_HOME/.config/nvim/nvim.bak.20260101-000000" ]
+  [ ! -e "$OMACOS_HOME/.config/nvim.bak.20260101-000000" ]
+}
+
 # --- state tier (hermetic, no mocks needed) ----------------------------------
 
 @test "apply_state: removes state dir and ghostty theme overlay" {

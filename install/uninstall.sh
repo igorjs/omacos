@@ -99,13 +99,18 @@ apply_security() {
     local tmp
     tmp="$(mktemp)"
     cp "$HOSTS_FILE" "$tmp"
-    managed_block_strip "$tmp" "$hosts_open" "$hosts_close"
-    # shellcheck disable=SC2024
-    sudo tee "$HOSTS_FILE" <"$tmp" >/dev/null
+    # Only rewrite /etc/hosts if the strip succeeded and left a non-empty file;
+    # never tee an empty file over a critical system file.
+    if managed_block_strip "$tmp" "$hosts_open" "$hosts_close" && [[ -s "$tmp" ]]; then
+      # shellcheck disable=SC2024
+      sudo tee "$HOSTS_FILE" <"$tmp" >/dev/null
+      ok "Stripped omacos blocked-endpoints block from $HOSTS_FILE"
+      sudo dscacheutil -flushcache 2>/dev/null || true
+      sudo killall -HUP mDNSResponder 2>/dev/null || true
+    else
+      warn "Skipped $HOSTS_FILE rewrite (strip failed or produced empty output); left unchanged"
+    fi
     rm -f "$tmp"
-    ok "Stripped omacos blocked-endpoints block from $HOSTS_FILE"
-    sudo dscacheutil -flushcache 2>/dev/null || true
-    sudo killall -HUP mDNSResponder 2>/dev/null || true
   else
     note "No $HOSTS_FILE changes needed"
   fi
@@ -229,6 +234,10 @@ apply_configs() {
       newest_bak="$(find "$(dirname "$target")" -maxdepth 1 \
         -name "$(basename "$target").bak*" 2>/dev/null | sort -r | head -1)"
       if [[ -n "$newest_bak" ]]; then
+        # Remove the OmacOS-placed target first. For a directory target,
+        # `mv backup target` would nest the backup inside the existing dir
+        # instead of replacing it, leaving the OmacOS config in place.
+        rm -rf "$target"
         mv "$newest_bak" "$target"
         ok "Restored $target from $newest_bak"
       elif cmp -s "$target" "$src" 2>/dev/null; then
