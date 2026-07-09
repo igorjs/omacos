@@ -1,116 +1,130 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: Apache-2.0
 #
-# OmacOS uninstaller — removes everything install.sh and omacos apply.
-# Called by `omacos uninstall`; can also be run directly.
+# OmacOS uninstaller — reverts what install.sh and `omacos` apply.
+# Dispatched by `omacos uninstall`; also runnable directly.
 #
-# Tiers (run in reverse of install order):
-#   security  — restore /etc/hosts from backup, re-enable SSH, remove mDNS write
-#   configs   — unlink or remove symlinked config files
-#   state     — remove ~/.config/omacos state directory
-#   defaults  — restore macOS defaults from whole-domain snapshots
-#   packages  — uninstall Homebrew packages and remove Homebrew itself
+# Each tier is split into a pure planner (plan_<tier> — prints the intended
+# actions to stdout, no side effects) and an applier (apply_<tier> — executes).
+# --dry-run prints the plans for every selected tier and changes nothing.
 #
-# All tiers are run by default. To run a single tier:
-#   OMACOS_UNINSTALL_TIERS=security install/uninstall.sh
+# Tiers:
+#   security  (default)            re-enable SSH / Remote Apple Events, restore
+#                                  /etc/hosts, re-enable weatherd/newsd
+#   configs   (default)            remove repo-owned symlinks/copies, strip the
+#                                  managed shell blocks, restore starship.toml
+#   state     (default)            remove ~/.config/omacos + generated overlays
+#   defaults  (--defaults/--all)   whole-domain `defaults import` from baseline
+#   packages  (--packages/--all)   brew rm OmacOS-added formulae/casks
 #
-# Dry-run mode (shows what would happen, makes no changes):
-#   DRY_RUN=1 install/uninstall.sh
+# Usage:
+#   install/uninstall.sh [--all] [--defaults] [--packages] [--dry-run]
+#
+# Sourcing this file (e.g. from bats) defines the functions and runs nothing.
 #
 set -euo pipefail
 
-# shellcheck source=../lib/common.sh
-# shellcheck disable=SC1091
+# shellcheck source=lib/common.sh
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../lib/common.sh"
 
+# --- Injected inputs (overridable in tests) ---------------------------------
 OMACOS_ROOT="${OMACOS_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
-DRY_RUN="${DRY_RUN:-0}"
-TIERS="${OMACOS_UNINSTALL_TIERS:-security configs state defaults packages}"
+OMACOS_STATE_DIR="${OMACOS_STATE_DIR:-$HOME/.config/omacos}"
+OMACOS_BASELINE_DIR="${OMACOS_BASELINE_DIR:-$OMACOS_STATE_DIR/baseline}"
 
-dry() {
-  if [[ "$DRY_RUN" == "1" ]]; then
-    note "[dry-run] $*"
+# --- Confirm gate: proceed only on an exact "YES" ---------------------------
+confirm_or_abort() {
+  local prompt="${1:-Type YES to proceed: }" reply
+  printf '%b' "${RED} !! ${RESET}${prompt}"
+  read -r reply || true
+  if [[ "$reply" != "YES" ]]; then
+    info "Aborted — no changes made."
+    exit 1
+  fi
+}
+
+# --- Tier planners + appliers (bodies filled by WU-24..28) ------------------
+plan_security() { note "TODO(WU-24): re-enable SSH/RAE, restore /etc/hosts, re-enable daemons"; }
+apply_security() { note "TODO(WU-24): apply security tier"; }
+
+plan_configs() { note "TODO(WU-25): remove repo-owned configs, strip managed blocks"; }
+apply_configs() { note "TODO(WU-25): apply configs tier"; }
+
+plan_state() { note "TODO(WU-26): remove ~/.config/omacos and theme overlays"; }
+apply_state() { note "TODO(WU-26): apply state tier"; }
+
+plan_defaults() { note "TODO(WU-27): defaults import from baseline (whole-domain)"; }
+apply_defaults() { note "TODO(WU-27): apply defaults tier"; }
+
+plan_packages() { note "TODO(WU-28): brew rm OmacOS-added packages"; }
+apply_packages() { note "TODO(WU-28): apply packages tier"; }
+
+# --- Usage ------------------------------------------------------------------
+uninstall_usage() {
+  cat <<'USAGE'
+omacos uninstall — revert OmacOS changes
+
+  (default)     run the security, configs, and state tiers
+  --defaults    also restore macOS defaults from the pre-install baseline
+                (WHOLE-DOMAIN import — reverts unrelated changes to those domains)
+  --packages    also brew rm packages OmacOS added (never pre-existing ones)
+  --all         --defaults and --packages
+  --dry-run     print the plan for every selected tier; change nothing
+  -h, --help    show this help
+USAGE
+}
+
+# --- Orchestration ----------------------------------------------------------
+run_uninstall() {
+  local dry_run=0 do_defaults=0 do_packages=0
+  for arg in "$@"; do
+    case "$arg" in
+      --dry-run) dry_run=1 ;;
+      --defaults) do_defaults=1 ;;
+      --packages) do_packages=1 ;;
+      --all)
+        do_defaults=1
+        do_packages=1
+        ;;
+      -h | --help)
+        uninstall_usage
+        return 0
+        ;;
+      *)
+        warn "Unknown option: $arg"
+        uninstall_usage
+        return 2
+        ;;
+    esac
+  done
+
+  local tiers=(security configs state)
+  [[ "$do_defaults" == 1 ]] && tiers+=(defaults)
+  [[ "$do_packages" == 1 ]] && tiers+=(packages)
+
+  if [[ "$dry_run" == 1 ]]; then
+    info "Dry run — no changes will be made. Planned tiers: ${tiers[*]}"
+    for t in "${tiers[@]}"; do
+      info "── plan: $t"
+      "plan_$t"
+    done
     return 0
   fi
-  "$@"
+
+  warn "OmacOS uninstall will revert the following tiers: ${tiers[*]}"
+  for t in "${tiers[@]}"; do
+    info "── plan: $t"
+    "plan_$t"
+  done
+  confirm_or_abort "Type YES to apply the above and revert OmacOS: "
+  for t in "${tiers[@]}"; do
+    info "── apply: $t"
+    "apply_$t"
+  done
+  ok "OmacOS uninstall complete (tiers: ${tiers[*]})."
 }
 
-# ---------------------------------------------------------------------------
-# Tier: security
-# Restore /etc/hosts from backup and re-enable SSH if it was disabled.
-# ---------------------------------------------------------------------------
-uninstall_security() {
-  info "Tier: security"
-  # Restore /etc/hosts — implemented in WU-24
-  note "TODO (WU-24): restore /etc/hosts from backup"
-  # Re-enable SSH — implemented in WU-24
-  note "TODO (WU-24): re-enable Remote Login (SSH)"
-}
-
-# ---------------------------------------------------------------------------
-# Tier: configs
-# Remove symlinks / copies placed by install.sh and omacos theme set.
-# ---------------------------------------------------------------------------
-uninstall_configs() {
-  info "Tier: configs"
-  # Implemented in WU-25
-  note "TODO (WU-25): remove config symlinks and theme overlays"
-}
-
-# ---------------------------------------------------------------------------
-# Tier: state
-# Remove the ~/.config/omacos state directory.
-# ---------------------------------------------------------------------------
-uninstall_state() {
-  info "Tier: state"
-  # Implemented in WU-25
-  note "TODO (WU-25): remove ~/.config/omacos"
-}
-
-# ---------------------------------------------------------------------------
-# Tier: defaults
-# Restore macOS defaults from whole-domain snapshots taken before install.
-# ---------------------------------------------------------------------------
-uninstall_defaults() {
-  info "Tier: defaults"
-  # Implemented in WU-26
-  note "TODO (WU-26): restore defaults from pre-install snapshots"
-}
-
-# ---------------------------------------------------------------------------
-# Tier: packages
-# Uninstall Homebrew packages and, optionally, Homebrew itself.
-# ---------------------------------------------------------------------------
-uninstall_packages() {
-  info "Tier: packages"
-  # Implemented in WU-27
-  note "TODO (WU-27): brew bundle --force cleanup; offer to remove Homebrew"
-}
-
-# ---------------------------------------------------------------------------
-# Main dispatch
-# ---------------------------------------------------------------------------
-warn "OmacOS uninstaller — this will undo what install.sh applied."
-if [[ "$DRY_RUN" != "1" ]]; then
-  read -r -p "Continue? [y/N] " _confirm
-  [[ "${_confirm:-n}" =~ ^[Yy]$ ]] || {
-    info "Aborted."
-    exit 0
-  }
+# --- Dispatch guard: run only when executed, not when sourced ---------------
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  run_uninstall "$@"
 fi
-
-# shellcheck disable=SC2086
-# SC2086: intentional word-splitting — TIERS is a space-separated list of tier names
-read -r -a _tier_arr <<<"$TIERS"
-for _tier in "${_tier_arr[@]}"; do
-  case "$_tier" in
-    security) uninstall_security ;;
-    configs) uninstall_configs ;;
-    state) uninstall_state ;;
-    defaults) uninstall_defaults ;;
-    packages) uninstall_packages ;;
-    *) warn "Unknown tier: $_tier; skipping" ;;
-  esac
-done
-
-ok "OmacOS uninstall complete (tiers: $TIERS)"
