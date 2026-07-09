@@ -48,3 +48,21 @@ jobs:
             fi
           done < <(git ls-files '*.sh' bin/omacos)
           exit "$fail"
+
+  bats:
+    name: bats smoke tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Install bats-core
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q bats
+
+      - name: Run bats tests
+        run: bats tests/
