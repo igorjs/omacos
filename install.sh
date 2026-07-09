@@ -243,7 +243,11 @@ else
   warn "nvim not on PATH; skipping bootstrap"
 fi
 
-# --- 12. macOS defaults ------------------------------------------------------
+# --- 12. Baseline snapshot (pre-defaults) ------------------------------------
+step "Baseline snapshot"
+bash "$OMACOS_ROOT/macos/baseline.sh"
+
+# --- 13. macOS defaults ------------------------------------------------------
 step "macOS appearance, Dock, input, locale"
 bash "$OMACOS_ROOT/macos/appearance.sh"
 bash "$OMACOS_ROOT/macos/accessibility.sh"
@@ -257,7 +261,7 @@ bash "$OMACOS_ROOT/macos/battery.sh"
 bash "$OMACOS_ROOT/macos/security.sh"
 bash "$OMACOS_ROOT/macos/safari.sh"
 
-# --- 13. Apply theme --------------------------------------------------------
+# --- 14. Apply theme --------------------------------------------------------
 step "Theme"
 "$OMACOS_ROOT/bin/omacos" theme set tokyonight
 
