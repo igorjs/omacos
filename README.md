@@ -150,7 +150,44 @@ omacos update              Update Homebrew packages, Claude Code, and re-apply t
 omacos snapshot [label]    Take a macOS defaults snapshot
 omacos export [dir]        Export Brewfile + key defaults plists with a restore.sh
 omacos doctor              Check system health, print pass/fail for all components
+omacos uninstall           Revert the install (security + configs + state by default)
 ```
+
+---
+
+## Uninstall
+
+```bash
+omacos uninstall                  # security + configs + state
+omacos uninstall --dry-run        # preview only, no changes
+omacos uninstall --all            # also restore defaults + remove packages
+omacos uninstall --defaults       # also restore macOS defaults from baseline
+omacos uninstall --packages       # also remove OmacOS-added Homebrew packages
+```
+
+`omacos uninstall` reverts what the installer applied. It runs three default tiers and accepts two opt-in flags.
+
+**Default tiers (always run):**
+
+- **`security`**: re-enables Remote Login (SSH) and Remote Apple Events, restores `/etc/hosts` from the timestamped backup (or strips just the OmacOS blocked-endpoints block if no backup exists), re-enables the Weather and News daemons, and resets the `system.preferences` admin-password requirement. Skipped automatically if MDM manages those settings.
+- **`configs`**: removes OmacOS-owned config symlinks (only those pointing back into the repo), restores backups where present, strips the `# >>> omacos >>>` managed blocks from `~/.zshenv` and `~/.zshrc`, and removes the generated `~/.config/starship.toml`. Files you've modified that have no backup are left alone.
+- **`state`**: removes `~/.config/omacos` and the generated theme overlays.
+
+**Opt-in tiers:**
+
+- **`--defaults`**: restores macOS `defaults` from the pre-install baseline captured by `macos/baseline.sh` (see caveat below).
+- **`--packages`**: runs `brew rm` on only the packages OmacOS added. Packages that were already installed before OmacOS aren't touched.
+- **`--all`**: shorthand for both `--defaults` and `--packages`.
+
+Applying any non-dry-run tier requires you to type `YES` exactly when prompted. `--dry-run` prints the plan for every selected tier without making changes.
+
+### Caveat: `--defaults` restores the whole domain
+
+The baseline is a `defaults export` snapshot taken during install, before OmacOS writes any settings. Replaying it with `defaults import` replaces the entire domain, so it also reverts unrelated Finder, Dock, Safari, and global preferences you changed after install. The baseline reflects your machine's pre-OmacOS state, not macOS factory defaults. It's opt-in, gated behind a `YES` confirmation, and previewable with `--dry-run`.
+
+### Caveat: Neovim lockfile churn
+
+`config/nvim` is symlinked into `~/.config/nvim`, so `:Lazy sync` and `omacos update` write through the symlink into the tracked `config/nvim/lazy-lock.json`, dirtying the working tree. The [Reproducibility](#reproducibility) section covers this. Commit the lockfile change intentionally when you mean to bump it.
 
 ---
 
