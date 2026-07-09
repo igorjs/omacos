@@ -31,6 +31,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../lib/common.sh"
 OMACOS_ROOT="${OMACOS_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 OMACOS_STATE_DIR="${OMACOS_STATE_DIR:-$HOME/.config/omacos}"
 OMACOS_BASELINE_DIR="${OMACOS_BASELINE_DIR:-$OMACOS_STATE_DIR/baseline}"
+HOSTS_FILE="${OMACOS_HOSTS_FILE:-/etc/hosts}"
 
 # --- Confirm gate: proceed only on an exact "YES" ---------------------------
 confirm_or_abort() {
@@ -44,8 +45,91 @@ confirm_or_abort() {
 }
 
 # --- Tier planners + appliers (bodies filled by WU-24..28) ------------------
-plan_security() { note "TODO(WU-24): re-enable SSH/RAE, restore /etc/hosts, re-enable daemons"; }
-apply_security() { note "TODO(WU-24): apply security tier"; }
+plan_security() {
+  local hosts_open="# >>> omacos blocked endpoints >>>"
+  local hosts_close="# <<< omacos blocked endpoints <<<"
+
+  note "re-enable Remote Login (SSH): launchctl enable system/com.openssh.sshd"
+  note "re-enable Remote Apple Events: launchctl enable system/com.apple.RemoteAppleEventsServer"
+
+  # Determine hosts action without mutating anything (read-only)
+  local newest_bak
+  newest_bak="$(find "$(dirname "${HOSTS_FILE}")" -maxdepth 1 \
+    -name "$(basename "${HOSTS_FILE}").bak.*" 2>/dev/null | sort -r | head -1)"
+  if [[ -n "$newest_bak" ]]; then
+    note "restore /etc/hosts from newest backup: $newest_bak"
+  elif grep -qF "$hosts_open" "$HOSTS_FILE" 2>/dev/null; then
+    note "strip omacos blocked-endpoints block from /etc/hosts"
+  else
+    note "no /etc/hosts changes needed"
+  fi
+
+  note "re-enable weatherd/newsd: launchctl enable system/com.apple.weatherd, com.apple.newsd"
+  note "reset system.preferences authorization right shared=true (skipped if MDM-managed / no top-level shared key)"
+  warn "SSH is re-enabled to Apple's default; this may surprise users who intentionally had SSH disabled before OmacOS. /etc/hosts, launchd overrides, and the authdb right are reset to Apple defaults, not restored to a captured pre-install value."
+}
+
+apply_security() {
+  local hosts_open="# >>> omacos blocked endpoints >>>"
+  local hosts_close="# <<< omacos blocked endpoints <<<"
+
+  # Re-enable Remote Login (SSH)
+  sudo launchctl enable system/com.openssh.sshd 2>/dev/null || true
+  ok "Remote Login (SSH) re-enabled"
+
+  # Re-enable Remote Apple Events
+  sudo launchctl enable system/com.apple.RemoteAppleEventsServer 2>/dev/null || true
+  ok "Remote Apple Events re-enabled"
+
+  # Re-enable Weather and News daemons
+  sudo launchctl enable system/com.apple.weatherd 2>/dev/null || true
+  sudo launchctl enable system/com.apple.newsd 2>/dev/null || true
+  ok "weatherd and newsd re-enabled"
+
+  # /etc/hosts: restore from newest backup if present, else strip markers, else no-op
+  local newest_bak
+  newest_bak="$(find "$(dirname "${HOSTS_FILE}")" -maxdepth 1 \
+    -name "$(basename "${HOSTS_FILE}").bak.*" 2>/dev/null | sort -r | head -1)"
+  if [[ -n "$newest_bak" ]]; then
+    sudo cp "$newest_bak" "$HOSTS_FILE"
+    ok "Restored $HOSTS_FILE from $newest_bak"
+    sudo dscacheutil -flushcache 2>/dev/null || true
+    sudo killall -HUP mDNSResponder 2>/dev/null || true
+  elif grep -qF "$hosts_open" "$HOSTS_FILE" 2>/dev/null; then
+    local tmp
+    tmp="$(mktemp)"
+    cp "$HOSTS_FILE" "$tmp"
+    managed_block_strip "$tmp" "$hosts_open" "$hosts_close"
+    # shellcheck disable=SC2024
+    sudo tee "$HOSTS_FILE" <"$tmp" >/dev/null
+    rm -f "$tmp"
+    ok "Stripped omacos blocked-endpoints block from $HOSTS_FILE"
+    sudo dscacheutil -flushcache 2>/dev/null || true
+    sudo killall -HUP mDNSResponder 2>/dev/null || true
+  else
+    note "No $HOSTS_FILE changes needed"
+  fi
+
+  # system.preferences authdb right: reset shared=true, guarded against MDM-managed rights
+  local sp_plist
+  sp_plist="$(mktemp -t omacos.system.preferences)" || sp_plist="/tmp/omacos.system.preferences.plist"
+  if security authorizationdb read system.preferences >"$sp_plist" 2>/dev/null; then
+    if /usr/libexec/PlistBuddy -c "Print :shared" "$sp_plist" >/dev/null 2>&1; then
+      /usr/libexec/PlistBuddy -c "Set :shared true" "$sp_plist" >/dev/null 2>&1
+      # shellcheck disable=SC2024
+      if sudo security authorizationdb write system.preferences <"$sp_plist" 2>/dev/null; then
+        ok "system.preferences authorization right reset to shared=true"
+      else
+        warn "Could not update system.preferences authorization right"
+      fi
+    else
+      note "system.preferences managed externally (MDM); left as-is"
+    fi
+  else
+    warn "Could not read system.preferences authorization right"
+  fi
+  rm -f "$sp_plist"
+}
 
 plan_configs() { note "TODO(WU-25): remove repo-owned configs, strip managed blocks"; }
 apply_configs() { note "TODO(WU-25): apply configs tier"; }
