@@ -29,7 +29,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../lib/common.sh"
 
 # --- Injected inputs (overridable in tests) ---------------------------------
 OMACOS_ROOT="${OMACOS_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
-OMACOS_STATE_DIR="${OMACOS_STATE_DIR:-$HOME/.config/omacos}"
+OMACOS_STATE_DIR="${OMACOS_STATE_DIR:-${OMACOS_HOME:-$HOME}/.config/omacos}"
 OMACOS_BASELINE_DIR="${OMACOS_BASELINE_DIR:-$OMACOS_STATE_DIR/baseline}"
 HOSTS_FILE="${OMACOS_HOSTS_FILE:-/etc/hosts}"
 
@@ -269,8 +269,43 @@ apply_configs() {
   fi
 }
 
-plan_state() { note "TODO(WU-26): remove ~/.config/omacos and theme overlays"; }
-apply_state() { note "TODO(WU-26): apply state tier"; }
+plan_state() {
+  local home="${OMACOS_HOME:-$HOME}"
+  local state_dir="${OMACOS_STATE_DIR:-$home/.config/omacos}"
+
+  local -a targets=(
+    "$state_dir"
+    "$home/.config/ghostty/theme.conf"
+    "$home/.config/tmux/theme.conf"
+    "$home/.config/nvim/theme.lua"
+  )
+
+  local t
+  for t in "${targets[@]}"; do
+    if [[ -e "$t" || -L "$t" ]]; then
+      note "remove: $t"
+    else
+      note "already absent: $t"
+    fi
+  done
+}
+
+apply_state() {
+  local home="${OMACOS_HOME:-$HOME}"
+  local state_dir="${OMACOS_STATE_DIR:-$home/.config/omacos}"
+
+  rm -rf "$state_dir"
+  ok "Removed state directory: $state_dir"
+
+  local overlay
+  for overlay in \
+    "$home/.config/ghostty/theme.conf" \
+    "$home/.config/tmux/theme.conf" \
+    "$home/.config/nvim/theme.lua"; do
+    rm -f "$overlay"
+    ok "Removed theme overlay (if present): $overlay"
+  done
+}
 
 plan_defaults() { note "TODO(WU-27): defaults import from baseline (whole-domain)"; }
 apply_defaults() { note "TODO(WU-27): apply defaults tier"; }
@@ -317,9 +352,10 @@ run_uninstall() {
     esac
   done
 
-  local tiers=(security configs state)
+  local tiers=(security configs)
   [[ "$do_defaults" == 1 ]] && tiers+=(defaults)
   [[ "$do_packages" == 1 ]] && tiers+=(packages)
+  tiers+=(state) # state runs last: it removes baseline/, which --defaults/--packages consume first
 
   if [[ "$dry_run" == 1 ]]; then
     info "Dry run — no changes will be made. Planned tiers: ${tiers[*]}"
