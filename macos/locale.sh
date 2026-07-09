@@ -9,14 +9,8 @@
 # Defaults match the user's setup: Australian English writing, US International PC keyboard.
 #
 set -euo pipefail
-
-BLUE='\033[38;2;122;162;247m'
-GREEN='\033[38;2;158;206;106m'
-PURPLE='\033[38;2;187;154;247m'
-RESET='\033[0m'
-info() { printf "${BLUE}==>${RESET} %s\n" "$1"; }
-ok() { printf "${GREEN} ok${RESET} %s\n" "$1"; }
-note() { printf "${PURPLE} MANUAL${RESET} %s\n" "$1"; }
+# shellcheck source=lib/common.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../lib/common.sh"
 
 OMACOS_LOCALE="${OMACOS_LOCALE:-en_AU}"
 OMACOS_LANGUAGE="${OMACOS_LANGUAGE:-${OMACOS_LOCALE//_/-}}"
