@@ -62,10 +62,10 @@ Or, to copy config files instead of symlinking them:
 - ripgrep, fd, fzf, jq, bat, eza, zoxide, lazygit, gh
 
 ### Languages (via mise)
-- Node.js 22 (LTS)
-- Python 3.13 (plus uv for package management)
-- Go 1.24
-- Rust 1.85 (with rustfmt, clippy, rust-analyzer, rust-src)
+- Node.js 24 (LTS)
+- Python 3.14 (plus uv for package management)
+- Go 1.26
+- Rust 1.96 (with rustfmt, clippy, rust-analyzer, rust-src)
 
 ### Containers
 - **Docker Desktop** - note: requires one manual launch to complete setup

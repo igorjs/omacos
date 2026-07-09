@@ -4,10 +4,10 @@
 # Keep these versions in sync with install/languages.sh.
 
 [tools]
-node = "22"
-python = "3.13"
-go = "1.24"
-rust = { version = "1.85", components = "rustfmt,clippy,rust-analyzer,rust-src", targets = "wasm32-unknown-unknown" }
+node = "24"
+python = "3.14"
+go = "1.26"
+rust = { version = "1.96", components = "rustfmt,clippy,rust-analyzer,rust-src", targets = "wasm32-unknown-unknown" }
 
 [env]
 # Project-scoped env vars live here (replaces direnv for most cases)

@@ -41,10 +41,10 @@ ok "Rust components set: rustfmt, clippy, rust-analyzer, rust-src"
 # Bump these intentionally when upgrading; avoid floating aliases (lts/latest/stable)
 # so installs are reproducible across machines. Keep .mise.toml sample in sync.
 declare -a tools=(
-  "node@22"
-  "python@3.13"
-  "go@1.24"
-  "rust@1.85"
+  "node@24"
+  "python@3.14"
+  "go@1.26"
+  "rust@1.96"
 )
 
 for t in "${tools[@]}"; do
