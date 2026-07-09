@@ -18,27 +18,19 @@
 #
 set -euo pipefail
 
-# --- Tokyo Night colorized output -------------------------------------------
+# shellcheck source=lib/common.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/common.sh"
+
+# install.sh-only palette extensions (not in lib)
 BG='\033[48;2;26;27;38m'
-BLUE='\033[38;2;122;162;247m'
-PURPLE='\033[38;2;187;154;247m'
-GREEN='\033[38;2;158;206;106m'
 YELLOW='\033[38;2;224;175;104m'
-RED='\033[38;2;247;118;142m'
-DIM='\033[38;2;86;95;137m'
-BOLD='\033[1m'
-RESET='\033[0m'
 
 banner() {
   printf '%b' "\n${BG}${PURPLE}${BOLD}                                                  ${RESET}\n"
   printf '%b' "${BG}${PURPLE}${BOLD}    OmacOS: opinionated macOS, Tokyo Night       ${RESET}\n"
   printf '%b' "${BG}${PURPLE}${BOLD}                                                  ${RESET}\n\n"
 }
-step() { printf "\n${PURPLE}==[ %s ]==${RESET}\n" "$1"; }
-info() { printf "${BLUE}==>${RESET} %s\n" "$1"; }
-ok() { printf "${GREEN} ok${RESET} %s\n" "$1"; }
-warn() { printf "${RED} !! ${RESET}%s\n" "$1"; }
-note() { printf "${PURPLE} MANUAL${RESET} %s\n" "$1"; }
+step() { printf '%b\n' "\n${PURPLE}==[ $1 ]==${RESET}"; }
 
 # --- Guards ------------------------------------------------------------------
 if [[ "$(uname -s)" != "Darwin" ]]; then

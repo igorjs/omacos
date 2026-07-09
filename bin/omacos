@@ -5,18 +5,8 @@
 #
 set -euo pipefail
 
-# --- Tokyo Night colors ------------------------------------------------------
-BLUE='\033[38;2;122;162;247m'
-PURPLE='\033[38;2;187;154;247m'
-GREEN='\033[38;2;158;206;106m'
-RED='\033[38;2;247;118;142m'
-DIM='\033[38;2;86;95;137m'
-BOLD='\033[1m'
-RESET='\033[0m'
-info() { printf "${BLUE}==>${RESET} %s\n" "$1"; }
-ok() { printf "${GREEN} ok${RESET} %s\n" "$1"; }
-fail() { printf "${RED} !! ${RESET}%s\n" "$1"; }
-note() { printf "${PURPLE} -- ${RESET}%s\n" "$1"; }
+# shellcheck source=lib/common.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../lib/common.sh"
 
 # --- Locate the OmacOS repo --------------------------------------------------
 find_root() {
