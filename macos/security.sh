@@ -7,13 +7,8 @@
 #
 set -euo pipefail
 
-BLUE='\033[38;2;122;162;247m'
-GREEN='\033[38;2;158;206;106m'
-YELLOW='\033[38;2;224;175;104m'
-RESET='\033[0m'
-info() { printf "${BLUE}==>${RESET} %s\n" "$1"; }
-ok() { printf "${GREEN} ok${RESET} %s\n" "$1"; }
-warn() { printf "${YELLOW}warn${RESET} %s\n" "$1"; }
+# shellcheck source=lib/common.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../lib/common.sh"
 
 # Acquire sudo credentials once up front; fail fast if unavailable.
 if ! sudo -n true 2>/dev/null; then
@@ -37,9 +32,13 @@ ok "Stealth mode on (no ping/port-probe responses)"
 info "Remote access"
 # launchctl avoids the interactive "you'll lose your connection" prompt
 # that systemsetup -setremotelogin triggers when SSH sessions are active.
-sudo launchctl disable system/com.openssh.sshd 2>/dev/null || true
-sudo launchctl stop system/com.openssh.sshd 2>/dev/null || true
-ok "Remote Login (SSH) disabled"
+if [[ "${OMACOS_DISABLE_SSH:-1}" == "1" ]]; then
+  sudo launchctl disable system/com.openssh.sshd 2>/dev/null || true
+  sudo launchctl stop system/com.openssh.sshd 2>/dev/null || true
+  ok "Remote Login (SSH) disabled"
+else
+  ok "Remote Login (SSH) gate skipped (OMACOS_DISABLE_SSH=0)"
+fi
 sudo launchctl disable system/com.apple.RemoteAppleEventsServer 2>/dev/null || true
 ok "Remote Apple Events disabled"
 
