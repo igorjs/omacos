@@ -36,8 +36,6 @@ OMACOS_ROOT="$(find_root)"
 STATE_DIR="$HOME/.config/omacos"
 mkdir -p "$STATE_DIR"
 
-TS() { date +%Y%m%d-%H%M%S; }
-
 # --- zed theme: update the "theme" key in-place (JSONC-safe) ----------------
 zed_set_theme() {
   local theme_name="$1" target="$2"
@@ -117,7 +115,7 @@ cmd_theme_set() {
   if [[ -f "$td/starship.toml" && -f "$OMACOS_ROOT/config/starship.toml" ]]; then
     mkdir -p "$HOME/.config"
     local sp="$HOME/.config/starship.toml"
-    [[ -f "$sp" ]] && cp "$sp" "$sp.bak.$(TS)"
+    [[ -f "$sp" ]] && cp "$sp" "$sp.bak"
     {
       cat "$OMACOS_ROOT/config/starship.toml"
       printf "\n# --- palette (theme: %s) ---\n" "$name"

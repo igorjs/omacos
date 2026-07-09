@@ -38,9 +38,8 @@ write_file() {
   shift
   local content_fn="$1"
   if [[ -f "$file" ]]; then
-    ts="$(date +%Y%m%d-%H%M%S)"
-    cp "$file" "$file.bak.$ts"
-    info "Backed up $file to $file.bak.$ts"
+    cp "$file" "$file.bak"
+    info "Backed up $file to $file.bak"
   fi
   {
     printf "%s\n" "$open_marker"

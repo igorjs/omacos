@@ -18,8 +18,7 @@ zed_settings="$HOME/.config/zed/settings.json"
 zed_src="$OMACOS_ROOT/config/zed.settings.json"
 mkdir -p "$(dirname "$zed_settings")"
 if [[ -f "$zed_settings" ]]; then
-  ts="$(date +%Y%m%d-%H%M%S)"
-  cp "$zed_settings" "$zed_settings.bak.$ts"
+  cp "$zed_settings" "$zed_settings.bak"
 fi
 cp "$zed_src" "$zed_settings"
 ok "Zed settings written to $zed_settings"
