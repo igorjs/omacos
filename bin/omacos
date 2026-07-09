@@ -188,6 +188,9 @@ cmd_update() {
 cmd_snapshot() { bash "$OMACOS_ROOT/tools/mac-snapshot.sh" snapshot "$@"; }
 cmd_export() { bash "$OMACOS_ROOT/tools/mac-snapshot.sh" export "$@"; }
 
+# --- uninstall ---------------------------------------------------------------
+cmd_uninstall() { bash "$OMACOS_ROOT/install/uninstall.sh" "$@"; }
+
 # --- doctor ------------------------------------------------------------------
 check() {
   local desc="$1"
@@ -495,38 +498,42 @@ usage() {
 OmacOS: opinionated, theme-able macOS setup
 
 Usage:
-  omacos theme list                 List available themes
-  omacos theme set <name>           Switch to a theme and reload apps
-  omacos update                     brew update + bundle, mise + nvim + Claude, re-apply theme
-  omacos snapshot [label]           Snapshot macOS defaults
-  omacos export [dir]               Export Brewfile + defaults + restore.sh
-  omacos doctor                     Check that everything is in place
+  omacos theme list                                    List available themes
+  omacos theme set <name>                              Switch to a theme and reload apps
+  omacos update                                        brew update + bundle, mise + nvim + Claude, re-apply theme
+  omacos snapshot [label]                              Snapshot macOS defaults
+  omacos export [dir]                                  Export Brewfile + defaults + restore.sh
+  omacos doctor                                        Check that everything is in place
+  omacos uninstall [--all|--defaults|--packages] [--dry-run]   Revert OmacOS changes
 USAGE
 }
 
 # --- dispatch ----------------------------------------------------------------
-cmd="${1:-}"
-shift || true
-case "$cmd" in
-  theme)
-    sub="${1:-}"
-    shift || true
-    case "$sub" in
-      list) cmd_theme_list ;;
-      set) cmd_theme_set "${1:-}" ;;
-      *)
-        usage
-        exit 2
-        ;;
-    esac
-    ;;
-  update) cmd_update ;;
-  snapshot) cmd_snapshot "$@" ;;
-  export) cmd_export "$@" ;;
-  doctor) cmd_doctor ;;
-  "" | -h | --help | help) usage ;;
-  *)
-    usage
-    exit 2
-    ;;
-esac
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  cmd="${1:-}"
+  shift || true
+  case "$cmd" in
+    theme)
+      sub="${1:-}"
+      shift || true
+      case "$sub" in
+        list) cmd_theme_list ;;
+        set) cmd_theme_set "${1:-}" ;;
+        *)
+          usage
+          exit 2
+          ;;
+      esac
+      ;;
+    update) cmd_update ;;
+    snapshot) cmd_snapshot "$@" ;;
+    export) cmd_export "$@" ;;
+    doctor) cmd_doctor ;;
+    uninstall) cmd_uninstall "$@" ;;
+    "" | -h | --help | help) usage ;;
+    *)
+      usage
+      exit 2
+      ;;
+  esac
+fi
