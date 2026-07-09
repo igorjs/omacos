@@ -391,8 +391,129 @@ apply_defaults() {
   done < <(find "$baseline" -maxdepth 1 -name '*.plist')
 }
 
-plan_packages() { note "TODO(WU-28): brew rm OmacOS-added packages"; }
-apply_packages() { note "TODO(WU-28): apply packages tier"; }
+plan_packages() {
+  local brewfile="${OMACOS_BREWFILE:-$OMACOS_ROOT/Brewfile}"
+  local baseline="${OMACOS_BASELINE_DIR}"
+
+  if [[ ! -f "$baseline/brew-formulae.txt" ]]; then
+    warn "no brew baseline found at $baseline; skipping package removal to avoid removing pre-existing tools"
+    return 0
+  fi
+
+  # Extract formula and cask names from Brewfile (first quoted token per line;
+  # tap and mas lines are ignored)
+  local -a bf_formulae=() bf_casks=()
+  local line
+  while IFS= read -r line; do
+    if [[ "$line" =~ ^brew[[:space:]]+\"([^\"]+)\" ]]; then
+      bf_formulae+=("${BASH_REMATCH[1]}")
+    elif [[ "$line" =~ ^cask[[:space:]]+\"([^\"]+)\" ]]; then
+      bf_casks+=("${BASH_REMATCH[1]}")
+    fi
+  done <"$brewfile"
+
+  # Set difference: Brewfile entries NOT present in the pre-install baseline
+  local -a to_remove_formulae=() to_remove_casks=()
+  local f c
+  if [[ ${#bf_formulae[@]} -gt 0 ]]; then
+    while IFS= read -r f; do
+      to_remove_formulae+=("$f")
+    done < <(printf '%s\n' "${bf_formulae[@]}" |
+      grep -vxF -f "$baseline/brew-formulae.txt")
+  fi
+  if [[ ${#bf_casks[@]} -gt 0 ]]; then
+    if [[ -f "$baseline/brew-casks.txt" ]]; then
+      while IFS= read -r c; do
+        to_remove_casks+=("$c")
+      done < <(printf '%s\n' "${bf_casks[@]}" |
+        grep -vxF -f "$baseline/brew-casks.txt")
+    else
+      note "no cask baseline found at $baseline/brew-casks.txt; skipping cask removal"
+    fi
+  fi
+
+  if [[ ${#to_remove_formulae[@]} -eq 0 && ${#to_remove_casks[@]} -eq 0 ]]; then
+    note "no OmacOS-added packages to remove"
+  else
+    for f in "${to_remove_formulae[@]}"; do
+      note "would remove formula: $f"
+    done
+    for c in "${to_remove_casks[@]}"; do
+      note "would remove cask: $c"
+    done
+  fi
+
+  note "baseline (pre-existing) packages are preserved"
+}
+
+apply_packages() {
+  local brewfile="${OMACOS_BREWFILE:-$OMACOS_ROOT/Brewfile}"
+  local baseline="${OMACOS_BASELINE_DIR}"
+
+  if ! command -v brew >/dev/null 2>&1; then
+    warn "brew not found; skipping package removal"
+    return 0
+  fi
+
+  if [[ ! -f "$baseline/brew-formulae.txt" ]]; then
+    warn "no brew baseline found at $baseline; skipping package removal to avoid removing pre-existing tools"
+    return 0
+  fi
+
+  # Extract formula and cask names from Brewfile (first quoted token per line;
+  # tap and mas lines are ignored)
+  local -a bf_formulae=() bf_casks=()
+  local line
+  while IFS= read -r line; do
+    if [[ "$line" =~ ^brew[[:space:]]+\"([^\"]+)\" ]]; then
+      bf_formulae+=("${BASH_REMATCH[1]}")
+    elif [[ "$line" =~ ^cask[[:space:]]+\"([^\"]+)\" ]]; then
+      bf_casks+=("${BASH_REMATCH[1]}")
+    fi
+  done <"$brewfile"
+
+  # Set difference: Brewfile entries NOT present in the pre-install baseline
+  local -a to_remove_formulae=() to_remove_casks=()
+  local f c
+  if [[ ${#bf_formulae[@]} -gt 0 ]]; then
+    while IFS= read -r f; do
+      to_remove_formulae+=("$f")
+    done < <(printf '%s\n' "${bf_formulae[@]}" |
+      grep -vxF -f "$baseline/brew-formulae.txt")
+  fi
+  if [[ ${#bf_casks[@]} -gt 0 ]]; then
+    if [[ -f "$baseline/brew-casks.txt" ]]; then
+      while IFS= read -r c; do
+        to_remove_casks+=("$c")
+      done < <(printf '%s\n' "${bf_casks[@]}" |
+        grep -vxF -f "$baseline/brew-casks.txt")
+    else
+      note "no cask baseline found at $baseline/brew-casks.txt; skipping cask removal"
+    fi
+  fi
+
+  if [[ ${#to_remove_formulae[@]} -eq 0 && ${#to_remove_casks[@]} -eq 0 ]]; then
+    note "no OmacOS-added packages to remove"
+    return 0
+  fi
+
+  # Mirror plan output before executing
+  for f in "${to_remove_formulae[@]}"; do
+    note "would remove formula: $f"
+  done
+  for c in "${to_remove_casks[@]}"; do
+    note "would remove cask: $c"
+  done
+
+  if [[ ${#to_remove_formulae[@]} -gt 0 ]]; then
+    brew rm "${to_remove_formulae[@]}" || warn "some formulae could not be removed"
+    ok "Removed OmacOS-added formulae: ${to_remove_formulae[*]}"
+  fi
+  if [[ ${#to_remove_casks[@]} -gt 0 ]]; then
+    brew rm --cask "${to_remove_casks[@]}" || warn "some casks could not be removed"
+    ok "Removed OmacOS-added casks: ${to_remove_casks[*]}"
+  fi
+}
 
 # --- Usage ------------------------------------------------------------------
 uninstall_usage() {
