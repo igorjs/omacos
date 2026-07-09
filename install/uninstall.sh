@@ -131,8 +131,143 @@ apply_security() {
   rm -f "$sp_plist"
 }
 
-plan_configs() { note "TODO(WU-25): remove repo-owned configs, strip managed blocks"; }
-apply_configs() { note "TODO(WU-25): apply configs tier"; }
+plan_configs() {
+  local home="${OMACOS_HOME:-$HOME}"
+
+  local -a targets=(
+    "$home/.config/aerospace/aerospace.toml"
+    "$home/.config/ghostty/config"
+    "$home/.tmux.conf"
+    "$home/.config/nvim"
+  )
+  local -a sources=(
+    "$OMACOS_ROOT/config/aerospace.toml"
+    "$OMACOS_ROOT/config/ghostty.config"
+    "$OMACOS_ROOT/config/tmux.conf"
+    "$OMACOS_ROOT/config/nvim"
+  )
+
+  local i target src link_dest newest_bak
+  for ((i = 0; i < ${#targets[@]}; i++)); do
+    target="${targets[$i]}"
+    src="${sources[$i]}"
+    if [[ -L "$target" ]]; then
+      link_dest="$(readlink "$target")"
+      if [[ "$link_dest" == "${OMACOS_ROOT}/"* ]]; then
+        note "remove repo-owned symlink: $target"
+      else
+        note "skip (symlink not owned by OmacOS): $target"
+      fi
+    elif [[ -e "$target" ]]; then
+      newest_bak="$(find "$(dirname "$target")" -maxdepth 1 \
+        -name "$(basename "$target").bak*" 2>/dev/null | sort -r | head -1)"
+      if [[ -n "$newest_bak" ]]; then
+        note "remove $target, restore newest backup $newest_bak"
+      elif cmp -s "$target" "$src" 2>/dev/null; then
+        note "remove copied config (matches repo): $target"
+      else
+        warn "leave user-modified file untouched: $target"
+      fi
+    else
+      note "already absent: $target"
+    fi
+  done
+
+  # Managed shell blocks
+  local shell_file
+  for shell_file in "$home/.zshenv" "$home/.zshrc"; do
+    if grep -qF '# >>> omacos >>>' "$shell_file" 2>/dev/null; then
+      note "strip omacos managed block from $shell_file"
+    else
+      note "no omacos block in $shell_file"
+    fi
+  done
+
+  # Generated starship config
+  local sp="$home/.config/starship.toml"
+  local sp_bak
+  sp_bak="$(find "$(dirname "$sp")" -maxdepth 1 \
+    -name "$(basename "$sp").bak*" 2>/dev/null | sort -r | head -1)" || sp_bak=""
+  if [[ -n "$sp_bak" ]]; then
+    note "restore starship.toml from $sp_bak"
+  elif [[ -f "$sp" ]]; then
+    warn "remove generated starship.toml (warn: not a symlink)"
+  else
+    note "starship.toml absent"
+  fi
+}
+
+apply_configs() {
+  local home="${OMACOS_HOME:-$HOME}"
+
+  local -a targets=(
+    "$home/.config/aerospace/aerospace.toml"
+    "$home/.config/ghostty/config"
+    "$home/.tmux.conf"
+    "$home/.config/nvim"
+  )
+  local -a sources=(
+    "$OMACOS_ROOT/config/aerospace.toml"
+    "$OMACOS_ROOT/config/ghostty.config"
+    "$OMACOS_ROOT/config/tmux.conf"
+    "$OMACOS_ROOT/config/nvim"
+  )
+
+  local i target src link_dest newest_bak
+  for ((i = 0; i < ${#targets[@]}; i++)); do
+    target="${targets[$i]}"
+    src="${sources[$i]}"
+    if [[ -L "$target" ]]; then
+      link_dest="$(readlink "$target")"
+      if [[ "$link_dest" == "${OMACOS_ROOT}/"* ]]; then
+        rm -f "$target"
+        ok "Removed repo-owned symlink: $target"
+      else
+        note "Skipping symlink not owned by OmacOS: $target"
+      fi
+    elif [[ -e "$target" ]]; then
+      newest_bak="$(find "$(dirname "$target")" -maxdepth 1 \
+        -name "$(basename "$target").bak*" 2>/dev/null | sort -r | head -1)"
+      if [[ -n "$newest_bak" ]]; then
+        mv "$newest_bak" "$target"
+        ok "Restored $target from $newest_bak"
+      elif cmp -s "$target" "$src" 2>/dev/null; then
+        rm -f "$target"
+        ok "Removed copied config (matched repo): $target"
+      else
+        warn "Leaving user-modified file untouched: $target"
+      fi
+    else
+      note "Already absent: $target"
+    fi
+  done
+
+  # Strip managed shell blocks
+  local shell_file
+  for shell_file in "$home/.zshenv" "$home/.zshrc"; do
+    if grep -qF '# >>> omacos >>>' "$shell_file" 2>/dev/null; then
+      managed_block_strip "$shell_file" '# >>> omacos >>>' '# <<< omacos <<<'
+      ok "Stripped OmacOS managed block from $shell_file"
+    else
+      note "No OmacOS block in $shell_file"
+    fi
+  done
+
+  # Starship config: restore backup or remove generated file
+  local sp="$home/.config/starship.toml"
+  local sp_bak
+  sp_bak="$(find "$(dirname "$sp")" -maxdepth 1 \
+    -name "$(basename "$sp").bak*" 2>/dev/null | sort -r | head -1)" || sp_bak=""
+  if [[ -n "$sp_bak" ]]; then
+    mv "$sp_bak" "$sp"
+    ok "Restored starship.toml from $sp_bak"
+  elif [[ -f "$sp" ]]; then
+    warn "Removing generated starship.toml (no backup found)"
+    rm -f "$sp"
+  else
+    note "starship.toml absent, nothing to do"
+  fi
+}
 
 plan_state() { note "TODO(WU-26): remove ~/.config/omacos and theme overlays"; }
 apply_state() { note "TODO(WU-26): apply state tier"; }
