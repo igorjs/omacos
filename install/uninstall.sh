@@ -310,9 +310,15 @@ apply_state() {
 plan_defaults() {
   local baseline="${OMACOS_BASELINE_DIR}"
 
+  # Check dir existence BEFORE running find: on a missing dir, find exits
+  # non-zero and (under pipefail) the command substitution would trip set -e.
+  if [[ ! -d "$baseline" ]]; then
+    warn "no baseline found at $baseline; nothing to restore"
+    return 0
+  fi
   local plist_count
   plist_count="$(find "$baseline" -maxdepth 1 -name '*.plist' 2>/dev/null | wc -l | tr -d ' ')"
-  if [[ ! -d "$baseline" || "$plist_count" == "0" ]]; then
+  if [[ "$plist_count" == "0" ]]; then
     warn "no baseline found at $baseline; nothing to restore"
     return 0
   fi
@@ -343,9 +349,15 @@ plan_defaults() {
 apply_defaults() {
   local baseline="${OMACOS_BASELINE_DIR}"
 
+  # Check dir existence BEFORE running find: on a missing dir, find exits
+  # non-zero and (under pipefail) the command substitution would trip set -e.
+  if [[ ! -d "$baseline" ]]; then
+    warn "no baseline found at $baseline; nothing to restore"
+    return 0
+  fi
   local plist_count
   plist_count="$(find "$baseline" -maxdepth 1 -name '*.plist' 2>/dev/null | wc -l | tr -d ' ')"
-  if [[ ! -d "$baseline" || "$plist_count" == "0" ]]; then
+  if [[ "$plist_count" == "0" ]]; then
     warn "no baseline found at $baseline; nothing to restore"
     return 0
   fi
