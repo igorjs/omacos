@@ -1,33 +1,33 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
 #
 # OmacOS CLI: theme switching, update, snapshot, doctor.
 #
 set -euo pipefail
 
-# --- Tokyo Night colors ------------------------------------------------------
-BLUE='\033[38;2;122;162;247m'
-PURPLE='\033[38;2;187;154;247m'
-GREEN='\033[38;2;158;206;106m'
-RED='\033[38;2;247;118;142m'
-DIM='\033[38;2;86;95;137m'
-BOLD='\033[1m'
-RESET='\033[0m'
-info(){ printf "${BLUE}==>${RESET} %s\n" "$1"; }
-ok(){   printf "${GREEN} ok${RESET} %s\n" "$1"; }
-fail(){ printf "${RED} !! ${RESET}%s\n" "$1"; }
-note(){ printf "${PURPLE} -- ${RESET}%s\n" "$1"; }
+# shellcheck source=lib/common.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../lib/common.sh"
 
 # --- Locate the OmacOS repo --------------------------------------------------
 find_root() {
   if [[ -n "${OMACOS_ROOT:-}" && -d "$OMACOS_ROOT" ]]; then
-    echo "$OMACOS_ROOT"; return
+    echo "$OMACOS_ROOT"
+    return
   fi
   if [[ -f "$HOME/.config/omacos/root" ]]; then
-    local r; r="$(cat "$HOME/.config/omacos/root")"
-    if [[ -d "$r" ]]; then echo "$r"; return; fi
+    local r
+    r="$(cat "$HOME/.config/omacos/root")"
+    if [[ -d "$r" ]]; then
+      echo "$r"
+      return
+    fi
   fi
-  local self; self="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-  if [[ -d "$self/themes" ]]; then echo "$self"; return; fi
+  local self
+  self="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+  if [[ -d "$self/themes" ]]; then
+    echo "$self"
+    return
+  fi
   fail "Cannot locate OmacOS repo. Set OMACOS_ROOT or run install.sh first."
   exit 1
 }
@@ -35,8 +35,6 @@ find_root() {
 OMACOS_ROOT="$(find_root)"
 STATE_DIR="$HOME/.config/omacos"
 mkdir -p "$STATE_DIR"
-
-TS() { date +%Y%m%d-%H%M%S; }
 
 # --- zed theme: update the "theme" key in-place (JSONC-safe) ----------------
 zed_set_theme() {
@@ -55,7 +53,8 @@ cmd_theme_list() {
     [[ -f "$STATE_DIR/current_theme" ]] && current="$(cat "$STATE_DIR/current_theme")"
     for d in "$OMACOS_ROOT/themes"/*/; do
       [[ -d "$d" ]] || continue
-      local name; name="$(basename "$d")"
+      local name
+      name="$(basename "$d")"
       if [[ "$name" == "$current" ]]; then
         printf "  ${PURPLE}* %s${RESET} ${DIM}(active)${RESET}\n" "$name"
       else
@@ -67,9 +66,15 @@ cmd_theme_list() {
 
 cmd_theme_set() {
   local name="${1:-}"
-  [[ -n "$name" ]] || { fail "usage: omacos theme set <name>"; exit 2; }
+  [[ -n "$name" ]] || {
+    fail "usage: omacos theme set <name>"
+    exit 2
+  }
   local td="$OMACOS_ROOT/themes/$name"
-  [[ -d "$td" ]] || { fail "Unknown theme: $name"; exit 1; }
+  [[ -d "$td" ]] || {
+    fail "Unknown theme: $name"
+    exit 1
+  }
   info "Applying theme: $name"
 
   # 1. Ghostty: write theme.conf next to the config file (~/.config/ghostty/config).
@@ -87,7 +92,11 @@ cmd_theme_set() {
     mkdir -p "$HOME/.config/tmux"
     cp "$td/tmux.conf" "$HOME/.config/tmux/theme.conf"
     if command -v tmux >/dev/null 2>&1 && tmux list-sessions >/dev/null 2>&1; then
-      tmux source-file "$HOME/.tmux.conf" 2>/dev/null && ok "tmux reloaded" || ok "tmux theme written (reload manually with prefix + r)"
+      if tmux source-file "$HOME/.tmux.conf" 2>/dev/null; then
+        ok "tmux reloaded"
+      else
+        ok "tmux theme written (reload manually with prefix + r)"
+      fi
     else
       ok "tmux theme written (no running session to reload)"
     fi
@@ -106,12 +115,12 @@ cmd_theme_set() {
   if [[ -f "$td/starship.toml" && -f "$OMACOS_ROOT/config/starship.toml" ]]; then
     mkdir -p "$HOME/.config"
     local sp="$HOME/.config/starship.toml"
-    [[ -f "$sp" ]] && cp "$sp" "$sp.bak.$(TS)"
+    [[ -f "$sp" ]] && cp "$sp" "$sp.bak"
     {
       cat "$OMACOS_ROOT/config/starship.toml"
       printf "\n# --- palette (theme: %s) ---\n" "$name"
       cat "$td/starship.toml"
-    } > "$sp"
+    } >"$sp"
     ok "Starship config rebuilt ($sp)"
   fi
 
@@ -138,7 +147,7 @@ cmd_theme_set() {
   fi
 
   # 8. Remember active theme.
-  echo "$name" > "$STATE_DIR/current_theme"
+  echo "$name" >"$STATE_DIR/current_theme"
   ok "Active theme: $name"
 }
 
@@ -177,11 +186,15 @@ cmd_update() {
 
 # --- snapshot / export wrappers ---------------------------------------------
 cmd_snapshot() { bash "$OMACOS_ROOT/tools/mac-snapshot.sh" snapshot "$@"; }
-cmd_export()   { bash "$OMACOS_ROOT/tools/mac-snapshot.sh" export   "$@"; }
+cmd_export() { bash "$OMACOS_ROOT/tools/mac-snapshot.sh" export "$@"; }
+
+# --- uninstall ---------------------------------------------------------------
+cmd_uninstall() { bash "$OMACOS_ROOT/install/uninstall.sh" "$@"; }
 
 # --- doctor ------------------------------------------------------------------
 check() {
-  local desc="$1"; shift
+  local desc="$1"
+  shift
   if "$@" >/dev/null 2>&1; then
     printf "  ${GREEN}ok${RESET}    %s\n" "$desc"
   else
@@ -190,7 +203,8 @@ check() {
 }
 
 check_warn() {
-  local desc="$1"; shift
+  local desc="$1"
+  shift
   if "$@" >/dev/null 2>&1; then
     printf "  ${GREEN}ok${RESET}    %s\n" "$desc"
   else
@@ -201,127 +215,133 @@ check_warn() {
 FAILS=0
 WARNS=0
 check_count() {
-  local desc="$1"; shift
+  local desc="$1"
+  shift
   if "$@" >/dev/null 2>&1; then
     printf "  ${GREEN}ok${RESET}    %s\n" "$desc"
   else
     printf "  ${RED}fail${RESET}  %s\n" "$desc"
-    (( FAILS++ )) || true
+    ((FAILS++)) || true
   fi
 }
 warn_count() {
-  local desc="$1"; shift
+  local desc="$1"
+  shift
   if "$@" >/dev/null 2>&1; then
     printf "  ${GREEN}ok${RESET}    %s\n" "$desc"
   else
     printf "  ${PURPLE}warn${RESET}  %s\n" "$desc"
-    (( WARNS++ )) || true
+    ((WARNS++)) || true
   fi
 }
 
 cmd_doctor() {
-  FAILS=0; WARNS=0
+  FAILS=0
+  WARNS=0
   local GH_DIR="$HOME/.config/ghostty"
 
-  printf "\n${BOLD}${PURPLE}OmacOS doctor${RESET}\n\n"
+  printf '%b' "\n${BOLD}${PURPLE}OmacOS doctor${RESET}\n\n"
 
-  printf "${DIM}# Prereqs${RESET}\n"
+  printf '%b' "${DIM}# Prereqs${RESET}\n"
   check_count "Xcode CLT path resolves" /usr/bin/xcode-select -p
   if [[ "$(uname -m)" == "arm64" ]]; then
     check_count "Rosetta 2 present (arm64)" /usr/bin/pgrep -q oahd
   else
-    printf "  ${DIM}skip${RESET}  Rosetta (Intel host)\n"
+    printf '%b' "  ${DIM}skip${RESET}  Rosetta (Intel host)\n"
   fi
 
-  printf "\n${DIM}# Binaries${RESET}\n"
-  check_count "brew"            command -v brew
-  check_count "git"             command -v git
-  check_count "gh"              command -v gh
-  check_count "tmux"            command -v tmux
-  check_count "starship"        command -v starship
-  check_count "mise"            command -v mise
-  check_count "uv"              command -v uv
-  check_count "nvim"            command -v nvim
-  check_count "ripgrep (rg)"    command -v rg
-  check_count "fd"              command -v fd
-  check_count "fzf"             command -v fzf
-  check_count "jq"              command -v jq
-  check_count "bat"             command -v bat
-  check_count "eza"             command -v eza
-  check_count "zoxide"          command -v zoxide
-  check_count "lazygit"         command -v lazygit
-  warn_count  "mas"             command -v mas
-  check_count "aerospace"       command -v aerospace
-  check_count "claude"          command -v claude
-  check_count "ghostty (app)"   test -d "/Applications/Ghostty.app"
-  check_count "zed (app)"       test -d "/Applications/Zed.app"
-  warn_count  "docker (app)"    test -d "/Applications/Docker.app"
+  printf '%b' "\n${DIM}# Binaries${RESET}\n"
+  check_count "brew" command -v brew
+  check_count "git" command -v git
+  check_count "gh" command -v gh
+  check_count "tmux" command -v tmux
+  check_count "starship" command -v starship
+  check_count "mise" command -v mise
+  check_count "uv" command -v uv
+  check_count "nvim" command -v nvim
+  check_count "ripgrep (rg)" command -v rg
+  check_count "fd" command -v fd
+  check_count "fzf" command -v fzf
+  check_count "jq" command -v jq
+  check_count "bat" command -v bat
+  check_count "eza" command -v eza
+  check_count "zoxide" command -v zoxide
+  check_count "lazygit" command -v lazygit
+  warn_count "mas" command -v mas
+  check_count "aerospace" command -v aerospace
+  check_count "claude" command -v claude
+  check_count "ghostty (app)" test -d "/Applications/Ghostty.app"
+  check_count "zed (app)" test -d "/Applications/Zed.app"
+  warn_count "docker (app)" test -d "/Applications/Docker.app"
 
-  printf "\n${DIM}# Language runtimes (via mise)${RESET}\n"
+  printf '%b' "\n${DIM}# Language runtimes (via mise)${RESET}\n"
   if command -v mise >/dev/null 2>&1; then
     for tool in node python go rust; do
       if mise which "$tool" >/dev/null 2>&1 || mise current "$tool" >/dev/null 2>&1; then
         printf "  ${GREEN}ok${RESET}    %s resolves through mise\n" "$tool"
       else
         printf "  ${RED}fail${RESET}  %s not installed via mise\n" "$tool"
-        (( FAILS++ )) || true
+        ((FAILS++)) || true
       fi
     done
     if command -v rustup >/dev/null 2>&1 && rustup show >/dev/null 2>&1; then
-      printf "  ${GREEN}ok${RESET}    rustup reachable (mise drives it)\n"
+      printf '%b' "  ${GREEN}ok${RESET}    rustup reachable (mise drives it)\n"
     else
-      printf "  ${PURPLE}warn${RESET}  rustup not yet present; first 'rustc' should install it via mise\n"
-      (( WARNS++ )) || true
+      printf '%b' "  ${PURPLE}warn${RESET}  rustup not yet present; first 'rustc' should install it via mise\n"
+      ((WARNS++)) || true
     fi
   else
-    printf "  ${RED}fail${RESET}  mise not installed; cannot check runtimes\n"
-    (( FAILS++ )) || true
+    printf '%b' "  ${RED}fail${RESET}  mise not installed; cannot check runtimes\n"
+    ((FAILS++)) || true
   fi
 
-  printf "\n${DIM}# Neovim${RESET}\n"
+  printf '%b' "\n${DIM}# Neovim${RESET}\n"
   if command -v nvim >/dev/null 2>&1; then
-    local nvim_v; nvim_v="$(nvim --version | head -1 | awk '{print $2}')"
+    local nvim_v
+    nvim_v="$(nvim --version | head -1 | awk '{print $2}')"
     printf "  ${GREEN}ok${RESET}    nvim version: %s\n" "$nvim_v"
     if nvim --headless -c 'lua if vim.fn.has("nvim-0.11")==1 then os.exit(0) else os.exit(1) end' -c 'q' 2>/dev/null; then
-      printf "  ${GREEN}ok${RESET}    nvim 0.11+ (native vim.lsp.enable)\n"
+      printf '%b' "  ${GREEN}ok${RESET}    nvim 0.11+ (native vim.lsp.enable)\n"
     else
-      printf "  ${RED}fail${RESET}  nvim older than 0.11; LSP config will not load\n"
-      (( FAILS++ )) || true
+      printf '%b' "  ${RED}fail${RESET}  nvim older than 0.11; LSP config will not load\n"
+      ((FAILS++)) || true
     fi
     if nvim --headless "+q" 2>/dev/null; then
-      printf "  ${GREEN}ok${RESET}    nvim config loads without error\n"
+      printf '%b' "  ${GREEN}ok${RESET}    nvim config loads without error\n"
     else
-      printf "  ${RED}fail${RESET}  nvim config errored on load (run: nvim --headless '+q')\n"
-      (( FAILS++ )) || true
+      printf '%b' "  ${RED}fail${RESET}  nvim config errored on load (run: nvim --headless '+q')\n"
+      ((FAILS++)) || true
     fi
   fi
 
-  printf "\n${DIM}# tmux${RESET}\n"
+  printf '%b' "\n${DIM}# tmux${RESET}\n"
   if command -v tmux >/dev/null 2>&1; then
-    local tmux_v; tmux_v="$(tmux -V | awk '{print $2}')"
+    local tmux_v
+    tmux_v="$(tmux -V | awk '{print $2}')"
     printf "  ${GREEN}ok${RESET}    tmux version: %s\n" "$tmux_v"
     if awk "BEGIN{exit!($tmux_v+0>=3.3)}" 2>/dev/null; then
-      printf "  ${GREEN}ok${RESET}    tmux 3.3+ (allow-passthrough / clickable links)\n"
+      printf '%b' "  ${GREEN}ok${RESET}    tmux 3.3+ (allow-passthrough / clickable links)\n"
     else
-      printf "  ${PURPLE}warn${RESET}  tmux < 3.3; clickable links in Ghostty may not work\n"
-      (( WARNS++ )) || true
+      printf '%b' "  ${PURPLE}warn${RESET}  tmux < 3.3; clickable links in Ghostty may not work\n"
+      ((WARNS++)) || true
     fi
   fi
-  check_count "TPM installed"          test -d "$HOME/.tmux/plugins/tpm"
-  check_count "tmux-resurrect plugin"  test -d "$HOME/.tmux/plugins/tmux-resurrect"
-  check_count "tmux-continuum plugin"  test -d "$HOME/.tmux/plugins/tmux-continuum"
+  check_count "TPM installed" test -d "$HOME/.tmux/plugins/tpm"
+  check_count "tmux-resurrect plugin" test -d "$HOME/.tmux/plugins/tmux-resurrect"
+  check_count "tmux-continuum plugin" test -d "$HOME/.tmux/plugins/tmux-continuum"
+  # shellcheck disable=SC2088
   check_count "~/.tmux.conf symlinked" test -L "$HOME/.tmux.conf"
-  check_count "tmux theme overlay"     test -f "$HOME/.config/tmux/theme.conf"
+  check_count "tmux theme overlay" test -f "$HOME/.config/tmux/theme.conf"
 
-  printf "\n${DIM}# Configs${RESET}\n"
-  check_count "ghostty config"         test -f "$GH_DIR/config"
-  check_count "ghostty theme overlay"  test -f "$GH_DIR/theme.conf"
-  check_count "aerospace config"       test -f "$HOME/.config/aerospace/aerospace.toml"
-  check_count "zed settings"           test -f "$HOME/.config/zed/settings.json"
-  check_count "starship config"        test -f "$HOME/.config/starship.toml"
-  check_count "nvim init.lua"          test -f "$HOME/.config/nvim/init.lua"
-  check_count "nvim theme overlay"     test -f "$HOME/.config/nvim/theme.lua"
-  check_count "zsh theme overlay"      test -f "$STATE_DIR/theme.zsh"
+  printf '%b' "\n${DIM}# Configs${RESET}\n"
+  check_count "ghostty config" test -f "$GH_DIR/config"
+  check_count "ghostty theme overlay" test -f "$GH_DIR/theme.conf"
+  check_count "aerospace config" test -f "$HOME/.config/aerospace/aerospace.toml"
+  check_count "zed settings" test -f "$HOME/.config/zed/settings.json"
+  check_count "starship config" test -f "$HOME/.config/starship.toml"
+  check_count "nvim init.lua" test -f "$HOME/.config/nvim/init.lua"
+  check_count "nvim theme overlay" test -f "$HOME/.config/nvim/theme.lua"
+  check_count "zsh theme overlay" test -f "$STATE_DIR/theme.zsh"
 
   # Symlink health: confirm configs point back into OmacOS repo
   for pair in \
@@ -333,101 +353,143 @@ cmd_doctor() {
       printf "  ${GREEN}ok${RESET}    symlink: %s -> repo\n" "$(basename "$dst")"
     elif [[ -f "$dst" ]]; then
       printf "  ${PURPLE}warn${RESET}  %s is a plain file (not symlinked to repo; changes won't be version-controlled)\n" "$(basename "$dst")"
-      (( WARNS++ )) || true
+      ((WARNS++)) || true
     fi
   done
 
-  printf "\n${DIM}# Shell wiring${RESET}\n"
+  printf '%b' "\n${DIM}# Shell wiring${RESET}\n"
   if grep -qsF '# >>> omacos >>>' "$HOME/.zshenv" 2>/dev/null; then
-    printf "  ${GREEN}ok${RESET}    OmacOS managed block in ~/.zshenv\n"
-    grep -qsF 'EDITOR'           "$HOME/.zshenv" && printf "  ${GREEN}ok${RESET}    EDITOR set in ~/.zshenv\n"              || { printf "  ${RED}fail${RESET}  EDITOR missing from ~/.zshenv\n"; (( FAILS++ )) || true; }
-    grep -qsF 'PATH'             "$HOME/.zshenv" && printf "  ${GREEN}ok${RESET}    PATH set in ~/.zshenv\n"                || { printf "  ${RED}fail${RESET}  PATH missing from ~/.zshenv\n"; (( FAILS++ )) || true; }
-    grep -qsF 'BAT_THEME'        "$HOME/.zshenv" && printf "  ${GREEN}ok${RESET}    BAT_THEME set in ~/.zshenv\n"           || { printf "  ${PURPLE}warn${RESET}  BAT_THEME missing from ~/.zshenv\n"; (( WARNS++ )) || true; }
+    printf '%b' "  ${GREEN}ok${RESET}    OmacOS managed block in ~/.zshenv\n"
+    if grep -qsF 'EDITOR' "$HOME/.zshenv"; then
+      printf '%b' "  ${GREEN}ok${RESET}    EDITOR set in ~/.zshenv\n"
+    else
+      printf '%b' "  ${RED}fail${RESET}  EDITOR missing from ~/.zshenv\n"
+      ((FAILS++)) || true
+    fi
+    if grep -qsF 'PATH' "$HOME/.zshenv"; then
+      printf '%b' "  ${GREEN}ok${RESET}    PATH set in ~/.zshenv\n"
+    else
+      printf '%b' "  ${RED}fail${RESET}  PATH missing from ~/.zshenv\n"
+      ((FAILS++)) || true
+    fi
+    if grep -qsF 'BAT_THEME' "$HOME/.zshenv"; then
+      printf '%b' "  ${GREEN}ok${RESET}    BAT_THEME set in ~/.zshenv\n"
+    else
+      printf '%b' "  ${PURPLE}warn${RESET}  BAT_THEME missing from ~/.zshenv\n"
+      ((WARNS++)) || true
+    fi
   else
-    printf "  ${RED}fail${RESET}  OmacOS managed block missing in ~/.zshenv (re-run install/shell.sh)\n"
-    (( FAILS++ )) || true
+    printf '%b' "  ${RED}fail${RESET}  OmacOS managed block missing in ~/.zshenv (re-run install/shell.sh)\n"
+    ((FAILS++)) || true
   fi
   if grep -qsF '# >>> omacos >>>' "$HOME/.zshrc" 2>/dev/null; then
-    printf "  ${GREEN}ok${RESET}    OmacOS managed block in ~/.zshrc\n"
-    grep -qsF 'mise activate'         "$HOME/.zshrc" && printf "  ${GREEN}ok${RESET}    mise activate present\n"              || { printf "  ${RED}fail${RESET}  mise activate missing\n"; (( FAILS++ )) || true; }
-    grep -qsF 'stty -ixon'            "$HOME/.zshrc" && printf "  ${GREEN}ok${RESET}    stty -ixon present (Ctrl+S usable)\n" || { printf "  ${PURPLE}warn${RESET}  stty -ixon missing; Ctrl+S may freeze terminal\n"; (( WARNS++ )) || true; }
-    grep -qsF 'zsh-autosuggestions'   "$HOME/.zshrc" && printf "  ${GREEN}ok${RESET}    zsh-autosuggestions sourced\n"        || { printf "  ${RED}fail${RESET}  zsh-autosuggestions not sourced\n"; (( FAILS++ )) || true; }
-    grep -qsF 'starship init'         "$HOME/.zshrc" && printf "  ${GREEN}ok${RESET}    starship init present\n"              || { printf "  ${RED}fail${RESET}  starship init missing\n"; (( FAILS++ )) || true; }
-    grep -qsF 'zsh-syntax-highlighting' "$HOME/.zshrc" && printf "  ${GREEN}ok${RESET}    zsh-syntax-highlighting sourced\n"  || { printf "  ${RED}fail${RESET}  zsh-syntax-highlighting not sourced\n"; (( FAILS++ )) || true; }
+    printf '%b' "  ${GREEN}ok${RESET}    OmacOS managed block in ~/.zshrc\n"
+    if grep -qsF 'mise activate' "$HOME/.zshrc"; then
+      printf '%b' "  ${GREEN}ok${RESET}    mise activate present\n"
+    else
+      printf '%b' "  ${RED}fail${RESET}  mise activate missing\n"
+      ((FAILS++)) || true
+    fi
+    if grep -qsF 'stty -ixon' "$HOME/.zshrc"; then
+      printf '%b' "  ${GREEN}ok${RESET}    stty -ixon present (Ctrl+S usable)\n"
+    else
+      printf '%b' "  ${PURPLE}warn${RESET}  stty -ixon missing; Ctrl+S may freeze terminal\n"
+      ((WARNS++)) || true
+    fi
+    if grep -qsF 'zsh-autosuggestions' "$HOME/.zshrc"; then
+      printf '%b' "  ${GREEN}ok${RESET}    zsh-autosuggestions sourced\n"
+    else
+      printf '%b' "  ${RED}fail${RESET}  zsh-autosuggestions not sourced\n"
+      ((FAILS++)) || true
+    fi
+    if grep -qsF 'starship init' "$HOME/.zshrc"; then
+      printf '%b' "  ${GREEN}ok${RESET}    starship init present\n"
+    else
+      printf '%b' "  ${RED}fail${RESET}  starship init missing\n"
+      ((FAILS++)) || true
+    fi
+    if grep -qsF 'zsh-syntax-highlighting' "$HOME/.zshrc"; then
+      printf '%b' "  ${GREEN}ok${RESET}    zsh-syntax-highlighting sourced\n"
+    else
+      printf '%b' "  ${RED}fail${RESET}  zsh-syntax-highlighting not sourced\n"
+      ((FAILS++)) || true
+    fi
   else
-    printf "  ${RED}fail${RESET}  OmacOS managed block missing in ~/.zshrc (re-run install/shell.sh)\n"
-    (( FAILS++ )) || true
+    printf '%b' "  ${RED}fail${RESET}  OmacOS managed block missing in ~/.zshrc (re-run install/shell.sh)\n"
+    ((FAILS++)) || true
   fi
   if [[ "${EDITOR:-}" == "zed --wait" ]]; then
-    printf "  ${GREEN}ok${RESET}    EDITOR=zed --wait\n"
+    printf '%b' "  ${GREEN}ok${RESET}    EDITOR=zed --wait\n"
   elif [[ -n "${EDITOR:-}" ]]; then
     printf "  ${PURPLE}warn${RESET}  EDITOR=%s (expected 'zed --wait')\n" "$EDITOR"
-    (( WARNS++ )) || true
+    ((WARNS++)) || true
   else
-    printf "  ${PURPLE}warn${RESET}  EDITOR not set in this shell; open a new terminal\n"
-    (( WARNS++ )) || true
+    printf '%b' "  ${PURPLE}warn${RESET}  EDITOR not set in this shell; open a new terminal\n"
+    ((WARNS++)) || true
   fi
 
-  printf "\n${DIM}# Git + GitHub${RESET}\n"
+  printf '%b' "\n${DIM}# Git + GitHub${RESET}\n"
   if [[ -n "$(git config --global --get user.name 2>/dev/null)" ]]; then
     printf "  ${GREEN}ok${RESET}    git user.name = %s\n" "$(git config --global user.name)"
   else
-    printf "  ${RED}fail${RESET}  git user.name not set\n"; (( FAILS++ )) || true
+    printf '%b' "  ${RED}fail${RESET}  git user.name not set\n"
+    ((FAILS++)) || true
   fi
   if [[ -n "$(git config --global --get user.email 2>/dev/null)" ]]; then
     printf "  ${GREEN}ok${RESET}    git user.email = %s\n" "$(git config --global user.email)"
   else
-    printf "  ${RED}fail${RESET}  git user.email not set\n"; (( FAILS++ )) || true
+    printf '%b' "  ${RED}fail${RESET}  git user.email not set\n"
+    ((FAILS++)) || true
   fi
   if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
-    printf "  ${GREEN}ok${RESET}    gh authenticated\n"
+    printf '%b' "  ${GREEN}ok${RESET}    gh authenticated\n"
   else
-    printf "  ${PURPLE}warn${RESET}  gh not authenticated; run 'gh auth login'\n"
-    (( WARNS++ )) || true
+    printf '%b' "  ${PURPLE}warn${RESET}  gh not authenticated; run 'gh auth login'\n"
+    ((WARNS++)) || true
   fi
 
-  printf "\n${DIM}# Security${RESET}\n"
+  printf '%b' "\n${DIM}# Security${RESET}\n"
   local fw=/usr/libexec/ApplicationFirewall/socketfilterfw
   if [[ -x "$fw" ]] && "$fw" --getglobalstate 2>/dev/null | grep -q "enabled"; then
-    printf "  ${GREEN}ok${RESET}    Application firewall enabled\n"
+    printf '%b' "  ${GREEN}ok${RESET}    Application firewall enabled\n"
   else
-    printf "  ${PURPLE}warn${RESET}  Firewall may be off (run 'sudo $fw --getglobalstate' to verify)\n"
-    (( WARNS++ )) || true
+    printf "  ${PURPLE}warn${RESET}  Firewall may be off (run 'sudo %s --getglobalstate' to verify)\n" "$fw"
+    ((WARNS++)) || true
   fi
-  warn_count  "Siri disabled"       bash -c 'defaults read com.apple.Siri StatusMenuVisible 2>/dev/null | grep -q 0'
+  warn_count "Siri disabled" bash -c 'defaults read com.apple.Siri StatusMenuVisible 2>/dev/null | grep -q 0'
   check_count "Screen lock on sleep" bash -c 'defaults read com.apple.screensaver askForPassword 2>/dev/null | grep -q 1'
-  warn_count  "AirDrop disabled"    bash -c 'defaults read com.apple.NetworkBrowser DisableAirDrop 2>/dev/null | grep -q 1'
-  printf "  ${PURPLE}MANUAL${RESET} AeroSpace Accessibility: System Settings > Privacy and Security > Accessibility\n"
+  warn_count "AirDrop disabled" bash -c 'defaults read com.apple.NetworkBrowser DisableAirDrop 2>/dev/null | grep -q 1'
+  printf '%b' "  ${PURPLE}MANUAL${RESET} AeroSpace Accessibility: System Settings > Privacy and Security > Accessibility\n"
 
-  printf "\n${DIM}# Fonts${RESET}\n"
+  printf '%b' "\n${DIM}# Fonts${RESET}\n"
   if fc-list 2>/dev/null | grep -qi 'JetBrainsMono'; then
-    printf "  ${GREEN}ok${RESET}    JetBrainsMono Nerd Font registered (fc-list)\n"
+    printf '%b' "  ${GREEN}ok${RESET}    JetBrainsMono Nerd Font registered (fc-list)\n"
   elif /usr/bin/system_profiler SPFontsDataType 2>/dev/null | grep -qi 'JetBrainsMono'; then
-    printf "  ${GREEN}ok${RESET}    JetBrainsMono Nerd Font installed (system_profiler)\n"
+    printf '%b' "  ${GREEN}ok${RESET}    JetBrainsMono Nerd Font installed (system_profiler)\n"
   else
-    printf "  ${PURPLE}warn${RESET}  Could not confirm JetBrainsMono Nerd Font\n"
-    (( WARNS++ )) || true
+    printf '%b' "  ${PURPLE}warn${RESET}  Could not confirm JetBrainsMono Nerd Font\n"
+    ((WARNS++)) || true
   fi
 
-  printf "\n${DIM}# Theme${RESET}\n"
+  printf '%b' "\n${DIM}# Theme${RESET}\n"
   if [[ -f "$STATE_DIR/current_theme" ]]; then
     printf "  ${GREEN}ok${RESET}    active theme: ${PURPLE}%s${RESET}\n" "$(cat "$STATE_DIR/current_theme")"
   else
-    printf "  ${PURPLE}warn${RESET}  no theme set; run 'omacos theme set tokyonight'\n"
-    (( WARNS++ )) || true
+    printf '%b' "  ${PURPLE}warn${RESET}  no theme set; run 'omacos theme set tokyonight'\n"
+    ((WARNS++)) || true
   fi
   if [[ -f "$HOME/.config/zed/settings.json" ]] && grep -q '"theme"' "$HOME/.config/zed/settings.json"; then
-    printf "  ${GREEN}ok${RESET}    Zed settings.json has theme key\n"
-    printf "  ${PURPLE}note${RESET}  Tokyo Night requires the 'Tokyo Night Themes' Zed extension (Cmd+Shift+X)\n"
+    printf '%b' "  ${GREEN}ok${RESET}    Zed settings.json has theme key\n"
+    printf '%b' "  ${PURPLE}note${RESET}  Tokyo Night requires the 'Tokyo Night Themes' Zed extension (Cmd+Shift+X)\n"
   fi
 
   printf "\n"
-  if (( FAILS > 0 )); then
+  if ((FAILS > 0)); then
     printf "${RED}${BOLD}%d failure(s)${RESET}, ${PURPLE}%d warning(s)${RESET}\n\n" "$FAILS" "$WARNS"
-  elif (( WARNS > 0 )); then
+  elif ((WARNS > 0)); then
     printf "${GREEN}${BOLD}All checks passed${RESET} with ${PURPLE}%d warning(s)${RESET}\n\n" "$WARNS"
   else
-    printf "${GREEN}${BOLD}All checks passed${RESET}\n\n"
+    printf '%b' "${GREEN}${BOLD}All checks passed${RESET}\n\n"
   fi
 }
 
@@ -436,30 +498,42 @@ usage() {
 OmacOS: opinionated, theme-able macOS setup
 
 Usage:
-  omacos theme list                 List available themes
-  omacos theme set <name>           Switch to a theme and reload apps
-  omacos update                     brew update + bundle, mise + nvim + Claude, re-apply theme
-  omacos snapshot [label]           Snapshot macOS defaults
-  omacos export [dir]               Export Brewfile + defaults + restore.sh
-  omacos doctor                     Check that everything is in place
+  omacos theme list                                    List available themes
+  omacos theme set <name>                              Switch to a theme and reload apps
+  omacos update                                        brew update + bundle, mise + nvim + Claude, re-apply theme
+  omacos snapshot [label]                              Snapshot macOS defaults
+  omacos export [dir]                                  Export Brewfile + defaults + restore.sh
+  omacos doctor                                        Check that everything is in place
+  omacos uninstall [--all|--defaults|--packages] [--dry-run]   Revert OmacOS changes
 USAGE
 }
 
 # --- dispatch ----------------------------------------------------------------
-cmd="${1:-}"; shift || true
-case "$cmd" in
-  theme)
-    sub="${1:-}"; shift || true
-    case "$sub" in
-      list) cmd_theme_list ;;
-      set)  cmd_theme_set "${1:-}" ;;
-      *)    usage; exit 2 ;;
-    esac
-    ;;
-  update)   cmd_update ;;
-  snapshot) cmd_snapshot "$@" ;;
-  export)   cmd_export "$@" ;;
-  doctor)   cmd_doctor ;;
-  ""|-h|--help|help) usage ;;
-  *) usage; exit 2 ;;
-esac
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  cmd="${1:-}"
+  shift || true
+  case "$cmd" in
+    theme)
+      sub="${1:-}"
+      shift || true
+      case "$sub" in
+        list) cmd_theme_list ;;
+        set) cmd_theme_set "${1:-}" ;;
+        *)
+          usage
+          exit 2
+          ;;
+      esac
+      ;;
+    update) cmd_update ;;
+    snapshot) cmd_snapshot "$@" ;;
+    export) cmd_export "$@" ;;
+    doctor) cmd_doctor ;;
+    uninstall) cmd_uninstall "$@" ;;
+    "" | -h | --help | help) usage ;;
+    *)
+      usage
+      exit 2
+      ;;
+  esac
+fi

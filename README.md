@@ -62,10 +62,10 @@ Or, to copy config files instead of symlinking them:
 - ripgrep, fd, fzf, jq, bat, eza, zoxide, lazygit, gh
 
 ### Languages (via mise)
-- Node.js LTS
-- Python (latest, plus uv for package management)
-- Go (latest)
-- Rust (stable, with rustfmt, clippy, rust-analyzer, rust-src)
+- Node.js 24 (LTS)
+- Python 3.14 (plus uv for package management)
+- Go 1.26
+- Rust 1.96 (with rustfmt, clippy, rust-analyzer, rust-src)
 
 ### Containers
 - **Docker Desktop** - note: requires one manual launch to complete setup
@@ -150,7 +150,44 @@ omacos update              Update Homebrew packages, Claude Code, and re-apply t
 omacos snapshot [label]    Take a macOS defaults snapshot
 omacos export [dir]        Export Brewfile + key defaults plists with a restore.sh
 omacos doctor              Check system health, print pass/fail for all components
+omacos uninstall           Revert the install (security + configs + state by default)
 ```
+
+---
+
+## Uninstall
+
+```bash
+omacos uninstall                  # security + configs + state
+omacos uninstall --dry-run        # preview only, no changes
+omacos uninstall --all            # also restore defaults + remove packages
+omacos uninstall --defaults       # also restore macOS defaults from baseline
+omacos uninstall --packages       # also remove OmacOS-added Homebrew packages
+```
+
+`omacos uninstall` reverts what the installer applied. It runs three default tiers and accepts two opt-in flags.
+
+**Default tiers (always run):**
+
+- **`security`**: re-enables Remote Login (SSH) and Remote Apple Events, restores `/etc/hosts` from the timestamped backup (or strips just the OmacOS blocked-endpoints block if no backup exists), re-enables the Weather and News daemons, and resets the `system.preferences` admin-password requirement. Skipped automatically if MDM manages those settings.
+- **`configs`**: removes OmacOS-owned config symlinks (only those pointing back into the repo), restores backups where present, strips the `# >>> omacos >>>` managed blocks from `~/.zshenv` and `~/.zshrc`, and removes the generated `~/.config/starship.toml`. Files you've modified that have no backup are left alone.
+- **`state`**: removes `~/.config/omacos` and the generated theme overlays.
+
+**Opt-in tiers:**
+
+- **`--defaults`**: restores macOS `defaults` from the pre-install baseline captured by `macos/baseline.sh` (see caveat below).
+- **`--packages`**: runs `brew rm` on only the packages OmacOS added. Packages that were already installed before OmacOS aren't touched.
+- **`--all`**: shorthand for both `--defaults` and `--packages`.
+
+Applying any non-dry-run tier requires you to type `YES` exactly when prompted. `--dry-run` prints the plan for every selected tier without making changes.
+
+### Caveat: `--defaults` restores the whole domain
+
+The baseline is a `defaults export` snapshot taken during install, before OmacOS writes any settings. Replaying it with `defaults import` replaces the entire domain, so it also reverts unrelated Finder, Dock, Safari, and global preferences you changed after install. The baseline reflects your machine's pre-OmacOS state, not macOS factory defaults. It's opt-in, gated behind a `YES` confirmation, and previewable with `--dry-run`.
+
+### Caveat: Neovim lockfile churn
+
+`config/nvim` is symlinked into `~/.config/nvim`, so `:Lazy sync` and `omacos update` write through the symlink into the tracked `config/nvim/lazy-lock.json`, dirtying the working tree. The [Reproducibility](#reproducibility) section covers this. Commit the lockfile change intentionally when you mean to bump it.
 
 ---
 
@@ -208,6 +245,12 @@ cp ~/omacos/.mise.toml myproject/.mise.toml
 
 mise activates automatically on `cd` into a directory with a `.mise.toml`.
 
+### Reproducibility
+
+Runtime versions are pinned in `install/languages.sh` (concrete versions, not floating aliases like `lts` or `latest`). The Neovim plugin lockfile (`config/nvim/lazy-lock.json`) is version-controlled; run `:Lazy sync` to update it, then commit the change intentionally.
+
+The Brewfile deliberately floats to the latest formula versions — Homebrew has no general Brewfile version lock. Package versions are not pinned; re-running the install may pick up newer releases. This is an accepted trade-off for keeping the toolchain current.
+
 ### uv for Python packages
 
 Rather than `pip install`, use [uv](https://docs.astral.sh/uv/) for fast, reproducible Python package management:
@@ -227,6 +270,8 @@ mise installs Rust via rustup. The rust-analyzer component is included, so it wo
 ## Known Quirks
 
 - **TPM plugin install focus**: After pressing `prefix+I` to install tmux plugins, the "Done, press ENTER" screen requires a mouse click before Enter works. This is a macOS window-focus edge case triggered by TPM's install overlay. It only happens during plugin installation (once per machine).
+
+- **Full Disk Access prompt during install**: `install.sh` checks for Full Disk Access and pauses if it is not granted. Open System Settings > Privacy and Security > Full Disk Access, enable the terminal running the install, then press Enter to continue.
 
 - **security.sh requires sudo**: `macos/security.sh` (firewall, SSH, mDNS) needs `sudo`. If running in a non-interactive context where sudo isn't pre-authenticated, it will prompt. Run `sudo -v` first or execute it manually: `bash macos/security.sh`.
 

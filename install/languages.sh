@@ -10,14 +10,13 @@
 #
 set -euo pipefail
 
-BLUE='\033[38;2;122;162;247m'; GREEN='\033[38;2;158;206;106m'
-PURPLE='\033[38;2;187;154;247m'; RED='\033[38;2;247;118;142m'; RESET='\033[0m'
-info(){ printf "${BLUE}==>${RESET} %s\n" "$1"; }
-ok(){   printf "${GREEN} ok${RESET} %s\n" "$1"; }
-note(){ printf "${PURPLE} MANUAL${RESET} %s\n" "$1"; }
-warn(){ printf "${RED} !! ${RESET}%s\n" "$1"; }
+# shellcheck source=lib/common.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../lib/common.sh"
 
-command -v mise >/dev/null 2>&1 || { warn "mise not on PATH; brew bundle should install it"; exit 1; }
+command -v mise >/dev/null 2>&1 || {
+  warn "mise not on PATH; brew bundle should install it"
+  exit 1
+}
 
 # Activate mise for this script so `mise use` writes through to its config.
 eval "$(mise activate bash --shims 2>/dev/null || true)"
@@ -28,7 +27,7 @@ export PATH="$HOME/.local/share/mise/shims:$PATH"
 # mise still tries to activate it when cwd matches.
 OMACOS_ROOT="${OMACOS_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 if [[ -f "$OMACOS_ROOT/.mise.toml" ]]; then
-  mise trust "$OMACOS_ROOT" >/dev/null 2>&1 && \
+  mise trust "$OMACOS_ROOT" >/dev/null 2>&1 &&
     ok "mise: trusted $OMACOS_ROOT/.mise.toml"
 fi
 
@@ -38,12 +37,14 @@ fi
 mise settings set rust.components "rustfmt,clippy,rust-analyzer,rust-src" 2>/dev/null || true
 ok "Rust components set: rustfmt, clippy, rust-analyzer, rust-src"
 
-# --- Install + pin global runtimes (channel aliases self-track) ------------
+# --- Install + pin global runtimes (concrete versions for reproducibility) ---
+# Bump these intentionally when upgrading; avoid floating aliases (lts/latest/stable)
+# so installs are reproducible across machines. Keep .mise.toml sample in sync.
 declare -a tools=(
-  "node@lts"
-  "python@latest"
-  "go@latest"
-  "rust@stable"
+  "node@24"
+  "python@3.14"
+  "go@1.26"
+  "rust@1.96"
 )
 
 for t in "${tools[@]}"; do

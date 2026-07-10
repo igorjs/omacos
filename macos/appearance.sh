@@ -6,10 +6,8 @@
 # so they swap with the theme.
 #
 set -euo pipefail
-
-BLUE='\033[38;2;122;162;247m'; GREEN='\033[38;2;158;206;106m'; RESET='\033[0m'
-info(){ printf "${BLUE}==>${RESET} %s\n" "$1"; }
-ok(){   printf "${GREEN} ok${RESET} %s\n" "$1"; }
+# shellcheck source=lib/common.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../lib/common.sh"
 
 info "Setting Dark mode"
 osascript -e 'tell application "System Events" to tell appearance preferences to set dark mode to true' || true
@@ -26,8 +24,8 @@ ok "Scroll bars always visible"
 
 # These two already match macOS defaults; set explicitly so the intent is
 # documented and survives a machine where the default ever changes.
-defaults write -g NSTableViewDefaultSizeMode -int 2          # sidebar icons: Medium
-defaults write -g AppleScrollerPagingBehavior -bool false    # click scroll track: jump to next page
+defaults write -g NSTableViewDefaultSizeMode -int 2       # sidebar icons: Medium
+defaults write -g AppleScrollerPagingBehavior -bool false # click scroll track: jump to next page
 ok "Sidebar icon size Medium, scroll-track click jumps to next page"
 
 # Menu bar autohide: only when sketchybar is installed (it replaces the native

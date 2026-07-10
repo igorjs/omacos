@@ -9,12 +9,8 @@
 # Defaults match the user's setup: Australian English writing, US International PC keyboard.
 #
 set -euo pipefail
-
-BLUE='\033[38;2;122;162;247m'; GREEN='\033[38;2;158;206;106m'
-PURPLE='\033[38;2;187;154;247m'; RESET='\033[0m'
-info(){ printf "${BLUE}==>${RESET} %s\n" "$1"; }
-ok(){   printf "${GREEN} ok${RESET} %s\n" "$1"; }
-note(){ printf "${PURPLE} MANUAL${RESET} %s\n" "$1"; }
+# shellcheck source=lib/common.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../lib/common.sh"
 
 OMACOS_LOCALE="${OMACOS_LOCALE:-en_AU}"
 OMACOS_LANGUAGE="${OMACOS_LANGUAGE:-${OMACOS_LOCALE//_/-}}"
@@ -22,10 +18,10 @@ OMACOS_KEYBOARD_LAYOUT="${OMACOS_KEYBOARD_LAYOUT:-USInternational-PC}"
 
 # --- Region / language (reliable) ------------------------------------------
 info "Setting locale to $OMACOS_LOCALE, language to $OMACOS_LANGUAGE"
-defaults write -g AppleLocale            -string "$OMACOS_LOCALE"
-defaults write -g AppleLanguages         -array  "$OMACOS_LANGUAGE"
-defaults write -g AppleMeasurementUnits  -string "Centimeters"
-defaults write -g AppleMetricUnits       -bool   true
+defaults write -g AppleLocale -string "$OMACOS_LOCALE"
+defaults write -g AppleLanguages -array "$OMACOS_LANGUAGE"
+defaults write -g AppleMeasurementUnits -string "Centimeters"
+defaults write -g AppleMetricUnits -bool true
 ok "Locale/language set (logout required for the menu bar to update)"
 
 # --- Keyboard input source (FRAGILE) ---------------------------------------
@@ -36,8 +32,8 @@ case "$OMACOS_KEYBOARD_LAYOUT" in
   USInternational-PC)
     info "Attempting to set keyboard layout: US International - PC"
     defaults write com.apple.HIToolbox AppleEnabledInputSources -array \
-      '{ "InputSourceKind" = "Keyboard Layout"; "KeyboardLayout ID" = 15000; "KeyboardLayout Name" = "USInternational-PC"; }' \
-      || true
+      '{ "InputSourceKind" = "Keyboard Layout"; "KeyboardLayout ID" = 15000; "KeyboardLayout Name" = "USInternational-PC"; }' ||
+      true
     ok "Layout write attempted"
     ;;
   *)

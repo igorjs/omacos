@@ -1,0 +1,68 @@
+# Shell script quality gate: ShellCheck, shfmt, and SPDX header presence.
+# This workflow is standalone (not synced from repo-config) and intentionally
+# covers the extension-less bin/omacos that the repo-config license.yml misses.
+name: shellcheck
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: ShellCheck + shfmt + SPDX
+    runs-on: ubuntu-latest
+    steps:
+      - uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Install shfmt
+        run: |
+          curl -sSfL https://github.com/mvdan/sh/releases/download/v3.13.0/shfmt_v3.13.0_linux_amd64 \
+            -o /usr/local/bin/shfmt
+          chmod +x /usr/local/bin/shfmt
+          shfmt --version
+
+      - name: ShellCheck
+        run: |
+          git ls-files '*.sh' bin/omacos | xargs shellcheck -s bash
+
+      - name: shfmt (format check)
+        run: |
+          git ls-files '*.sh' bin/omacos | xargs shfmt -d -i 2 -ci
+
+      - name: SPDX header presence
+        run: |
+          fail=0
+          while IFS= read -r f; do
+            if ! head -5 "$f" | grep -qF 'SPDX-License-Identifier'; then
+              echo "MISSING SPDX header: $f"
+              fail=1
+            fi
+          done < <(git ls-files '*.sh' bin/omacos)
+          exit "$fail"
+
+  bats:
+    name: bats smoke tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Install bats-core
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q bats
+
+      - name: Run bats tests
+        run: bats tests/

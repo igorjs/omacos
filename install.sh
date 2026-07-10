@@ -18,27 +18,19 @@
 #
 set -euo pipefail
 
-# --- Tokyo Night colorized output -------------------------------------------
+# shellcheck source=lib/common.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/common.sh"
+
+# install.sh-only palette extensions (not in lib)
 BG='\033[48;2;26;27;38m'
-BLUE='\033[38;2;122;162;247m'
-PURPLE='\033[38;2;187;154;247m'
-GREEN='\033[38;2;158;206;106m'
 YELLOW='\033[38;2;224;175;104m'
-RED='\033[38;2;247;118;142m'
-DIM='\033[38;2;86;95;137m'
-BOLD='\033[1m'
-RESET='\033[0m'
 
 banner() {
-  printf "\n${BG}${PURPLE}${BOLD}                                                  ${RESET}\n"
-  printf "${BG}${PURPLE}${BOLD}    OmacOS: opinionated macOS, Tokyo Night       ${RESET}\n"
-  printf "${BG}${PURPLE}${BOLD}                                                  ${RESET}\n\n"
+  printf '%b' "\n${BG}${PURPLE}${BOLD}                                                  ${RESET}\n"
+  printf '%b' "${BG}${PURPLE}${BOLD}    OmacOS: opinionated macOS, Tokyo Night       ${RESET}\n"
+  printf '%b' "${BG}${PURPLE}${BOLD}                                                  ${RESET}\n\n"
 }
-step()  { printf "\n${PURPLE}==[ %s ]==${RESET}\n" "$1"; }
-info()  { printf "${BLUE}==>${RESET} %s\n" "$1"; }
-ok()    { printf "${GREEN} ok${RESET} %s\n" "$1"; }
-warn()  { printf "${RED} !! ${RESET}%s\n" "$1"; }
-note()  { printf "${PURPLE} MANUAL${RESET} %s\n" "$1"; }
+step() { printf '%b\n' "\n${PURPLE}==[ $1 ]==${RESET}"; }
 
 # --- Guards ------------------------------------------------------------------
 if [[ "$(uname -s)" != "Darwin" ]]; then
@@ -56,7 +48,11 @@ fi
 sudo -v
 # Refresh the sudo timestamp every 60s until this script exits (covers long
 # steps like Homebrew and the Neovim bootstrap, and the FDA grant wait).
-( while true; do sudo -n true 2>/dev/null; sleep 60; kill -0 "$$" 2>/dev/null || exit; done ) &
+(while true; do
+  sudo -n true 2>/dev/null
+  sleep 60
+  kill -0 "$$" 2>/dev/null || exit
+done) &
 SUDO_KEEPALIVE_PID=$!
 trap 'kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true' EXIT
 
@@ -70,13 +66,13 @@ check_full_disk_access() {
 }
 
 if ! check_full_disk_access; then
-  printf "\n${YELLOW:-}⚠️  Full Disk Access required${RESET}\n"
+  printf '%b' "\n${YELLOW:-}⚠️  Full Disk Access required${RESET}\n"
   printf "Some installation steps need Full Disk Access for your terminal.\n\n"
   printf "Opening System Settings → Privacy & Security → Full Disk Access...\n\n"
   open "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles"
-  printf "1. Find ${BOLD:-}Terminal${RESET} (or your terminal app) in the list\n"
+  printf '%b' "1. Find ${BOLD:-}Terminal${RESET} (or your terminal app) in the list\n"
   printf "2. Enable the toggle\n"
-  printf "3. Press ${BOLD:-}Enter${RESET} here to continue\n\n"
+  printf '%b' "3. Press ${BOLD:-}Enter${RESET} here to continue\n\n"
   read -r -p "Press Enter once Full Disk Access is granted... "
   printf "\n"
 fi
@@ -87,11 +83,14 @@ for a in "$@"; do
   case "$a" in
     --copy) LINK_MODE="copy" ;;
     --symlink) LINK_MODE="symlink" ;;
-    -h|--help)
+    -h | --help)
       sed -n '3,17p' "$0"
       exit 0
       ;;
-    *) warn "Unknown arg: $a"; exit 2 ;;
+    *)
+      warn "Unknown arg: $a"
+      exit 2
+      ;;
   esac
 done
 
@@ -100,7 +99,7 @@ OMACOS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export OMACOS_ROOT
 STATE_DIR="$HOME/.config/omacos"
 mkdir -p "$STATE_DIR"
-echo "$OMACOS_ROOT" > "$STATE_DIR/root"
+echo "$OMACOS_ROOT" >"$STATE_DIR/root"
 
 TS="$(date +%Y%m%d-%H%M%S)"
 MANUAL_STEPS=()
@@ -145,7 +144,8 @@ add_manual "If Xcode CLT prompt appeared, ensure it finished. AeroSpace also nee
 # --- 2. Homebrew ------------------------------------------------------------
 step "Homebrew"
 bash "$OMACOS_ROOT/install/homebrew.sh"
-if [[ -x /opt/homebrew/bin/brew ]]; then eval "$(/opt/homebrew/bin/brew shellenv)"
+if [[ -x /opt/homebrew/bin/brew ]]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
 elif [[ -x /usr/local/bin/brew ]]; then eval "$(/usr/local/bin/brew shellenv)"; fi
 
 # --- 3. Packages ------------------------------------------------------------
@@ -190,10 +190,10 @@ add_manual "Open Docker Desktop once to finish setup"
 
 # --- 10. Configs -------------------------------------------------------------
 step "Configs (${LINK_MODE})"
-link_or_copy "$OMACOS_ROOT/config/aerospace.toml"     "$HOME/.config/aerospace/aerospace.toml"
-link_or_copy "$OMACOS_ROOT/config/ghostty.config"     "$HOME/.config/ghostty/config"
-link_or_copy "$OMACOS_ROOT/config/tmux.conf"          "$HOME/.tmux.conf"
-link_or_copy "$OMACOS_ROOT/config/nvim"               "$HOME/.config/nvim"
+link_or_copy "$OMACOS_ROOT/config/aerospace.toml" "$HOME/.config/aerospace/aerospace.toml"
+link_or_copy "$OMACOS_ROOT/config/ghostty.config" "$HOME/.config/ghostty/config"
+link_or_copy "$OMACOS_ROOT/config/tmux.conf" "$HOME/.tmux.conf"
+link_or_copy "$OMACOS_ROOT/config/nvim" "$HOME/.config/nvim"
 
 # Tmux plugins (TPM + resurrect + continuum). Runs AFTER tmux.conf is linked
 # so install_plugins.sh can read the @plugin entries from ~/.tmux.conf.
@@ -202,7 +202,7 @@ bash "$OMACOS_ROOT/install/tmux.sh"
 # Zed: write settings and install extensions.
 bash "$OMACOS_ROOT/install/zed.sh"
 
-# --- 10. Neovim bootstrap (headless: plugins + treesitter + LSP servers) ----
+# --- 11. Neovim bootstrap (headless: plugins + treesitter + LSP servers) ----
 step "Neovim bootstrap"
 if command -v nvim >/dev/null 2>&1; then
   info "Installing plugins (this may take a minute)"
@@ -224,7 +224,10 @@ if command -v nvim >/dev/null 2>&1; then
       [[ -f "$mason_pkg_dir/$s/mason-receipt.json" ]] || mason_missing+=("$s")
     done
     [[ ${#mason_missing[@]} -eq 0 ]] && break
-    [[ $attempt -lt 3 ]] && { warn "Mason: retrying ${#mason_missing[@]} package(s): ${mason_missing[*]}"; sleep 3; }
+    [[ $attempt -lt 3 ]] && {
+      warn "Mason: retrying ${#mason_missing[@]} package(s): ${mason_missing[*]}"
+      sleep 3
+    }
   done
   if [[ ${#mason_missing[@]} -eq 0 ]]; then
     ok "All LSP servers installed"
@@ -240,7 +243,11 @@ else
   warn "nvim not on PATH; skipping bootstrap"
 fi
 
-# --- 11. macOS defaults ------------------------------------------------------
+# --- 12. Baseline snapshot (pre-defaults) ------------------------------------
+step "Baseline snapshot"
+bash "$OMACOS_ROOT/macos/baseline.sh"
+
+# --- 13. macOS defaults ------------------------------------------------------
 step "macOS appearance, Dock, input, locale"
 bash "$OMACOS_ROOT/macos/appearance.sh"
 bash "$OMACOS_ROOT/macos/accessibility.sh"
@@ -254,7 +261,7 @@ bash "$OMACOS_ROOT/macos/battery.sh"
 bash "$OMACOS_ROOT/macos/security.sh"
 bash "$OMACOS_ROOT/macos/safari.sh"
 
-# --- 12. Apply theme --------------------------------------------------------
+# --- 14. Apply theme --------------------------------------------------------
 step "Theme"
 "$OMACOS_ROOT/bin/omacos" theme set tokyonight
 
@@ -273,8 +280,8 @@ add_manual "Log out and back in for key repeat, locale, and input source to full
 # --- Summary -----------------------------------------------------------------
 step "Done"
 ok "OmacOS bootstrap finished."
-printf "\n${PURPLE}MANUAL steps to finish your setup:${RESET}\n"
+printf '%b' "\n${PURPLE}MANUAL steps to finish your setup:${RESET}\n"
 for s in "${MANUAL_STEPS[@]}"; do
   printf "  ${DIM}-${RESET} %s\n" "$s"
 done
-printf "\nRun ${BLUE}omacos doctor${RESET} to verify everything.\n"
+printf '%b' "\nRun ${BLUE}omacos doctor${RESET} to verify everything.\n"

@@ -6,12 +6,8 @@
 # fully take effect; the installer's summary reminds the user.
 #
 set -euo pipefail
-
-BLUE='\033[38;2;122;162;247m'; GREEN='\033[38;2;158;206;106m'
-PURPLE='\033[38;2;187;154;247m'; RESET='\033[0m'
-info(){ printf "${BLUE}==>${RESET} %s\n" "$1"; }
-ok(){   printf "${GREEN} ok${RESET} %s\n" "$1"; }
-note(){ printf "${PURPLE} -- ${RESET}%s\n" "$1"; }
+# shellcheck source=lib/common.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../lib/common.sh"
 
 # --- Key repeat: fast end of the UI sliders --------------------------------
 # KeyRepeat=2 and InitialKeyRepeat=15 are near the fast end of System Settings.

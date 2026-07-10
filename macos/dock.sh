@@ -4,11 +4,8 @@
 # Dock: autohide, instant, no recents.
 #
 set -euo pipefail
-
-BLUE='\033[38;2;122;162;247m'; GREEN='\033[38;2;158;206;106m'
-RESET='\033[0m'
-info(){ printf "${BLUE}==>${RESET} %s\n" "$1"; }
-ok(){   printf "${GREEN} ok${RESET} %s\n" "$1"; }
+# shellcheck source=lib/common.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../lib/common.sh"
 
 info "Configuring Dock"
 defaults write com.apple.dock autohide -bool true
@@ -17,15 +14,15 @@ defaults write com.apple.dock autohide-time-modifier -float 0
 defaults write com.apple.dock show-recents -bool false
 
 # Appearance and position
-defaults write com.apple.dock tilesize -int 36              # Size: small (tweak to taste)
-defaults write com.apple.dock magnification -bool false     # Magnification: off
-defaults write com.apple.dock orientation -string "bottom"  # Dock on the bottom edge
-defaults write com.apple.dock mineffect -string "scale"     # Minimise animation: Scale Effect
+defaults write com.apple.dock tilesize -int 36             # Size: small (tweak to taste)
+defaults write com.apple.dock magnification -bool false    # Magnification: off
+defaults write com.apple.dock orientation -string "bottom" # Dock on the bottom edge
+defaults write com.apple.dock mineffect -string "scale"    # Minimise animation: Scale Effect
 
 # Behaviour
-defaults write com.apple.dock minimize-to-application -bool true  # Minimise into app icon
-defaults write com.apple.dock launchanim -bool true               # Animate opening apps
-defaults write com.apple.dock show-process-indicators -bool true  # Indicators for open apps
+defaults write com.apple.dock minimize-to-application -bool true # Minimise into app icon
+defaults write com.apple.dock launchanim -bool true              # Animate opening apps
+defaults write com.apple.dock show-process-indicators -bool true # Indicators for open apps
 
 # Window title bar double-click action: Zoom (global domain key, lives in this pane)
 defaults write -g AppleActionOnDoubleClick -string "Maximize"
@@ -51,19 +48,25 @@ if command -v dockutil >/dev/null 2>&1; then
   # (15) and earlier. Use whichever exists; skip if neither is present.
   apps_launcher=""
   for candidate in "/System/Applications/Apps.app" "/System/Applications/Launchpad.app"; do
-    if [[ -d "$candidate" ]]; then apps_launcher="$candidate"; break; fi
+    if [[ -d "$candidate" ]]; then
+      apps_launcher="$candidate"
+      break
+    fi
   done
 
   # System Settings on Ventura (13+); System Preferences on Monterey (12) and older.
   settings_app=""
   for candidate in "/System/Applications/System Settings.app" "/System/Applications/System Preferences.app"; do
-    if [[ -d "$candidate" ]]; then settings_app="$candidate"; break; fi
+    if [[ -d "$candidate" ]]; then
+      settings_app="$candidate"
+      break
+    fi
   done
 
   dockutil --remove all --no-restart >/dev/null
   [[ -n "$apps_launcher" ]] && dockutil --add "$apps_launcher" --no-restart >/dev/null
-  [[ -n "$settings_app"  ]] && dockutil --add "$settings_app"  --no-restart >/dev/null
-  dockutil --add "/Applications/Ghostty.app"     --no-restart >/dev/null
+  [[ -n "$settings_app" ]] && dockutil --add "$settings_app" --no-restart >/dev/null
+  dockutil --add "/Applications/Ghostty.app" --no-restart >/dev/null
   dockutil --add '' --type spacer --section apps --no-restart >/dev/null
   dockutil --add "$HOME/Downloads" --section others --view fan --display folder \
     --sort dateadded --no-restart >/dev/null

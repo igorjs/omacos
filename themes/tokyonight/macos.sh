@@ -6,13 +6,12 @@
 #
 set -euo pipefail
 
-BLUE=$'\033[38;2;122;162;247m'; PURPLE=$'\033[38;2;187;154;247m'
-GREEN=$'\033[38;2;158;206;106m'; DIM=$'\033[38;2;86;95;137m'; RESET=$'\033[0m'
-info(){ printf "%s==>%s %s\n" "$BLUE" "$RESET" "$1"; }
-ok(){   printf "%s ok%s %s\n" "$GREEN" "$RESET" "$1"; }
-note(){ printf "%s MANUAL%s %s\n" "$PURPLE" "$RESET" "$1"; }
+# shellcheck source=lib/common.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../../lib/common.sh"
 
 info "Applying Tokyo Night macOS overlay"
+
+THEME_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Accent: Blue (4) matches Tokyo Night's #7aa2f7 better than Purple (5) which
 # renders as hot-pink/magenta in macOS. There is no custom-hex accent support.
@@ -26,7 +25,6 @@ ok "Highlight color: ~#7aa2f7"
 # Terminal.app: inject Tokyo Night profile directly into preferences (the
 # `open -a Terminal file.terminal` import path is unreliable on some macOS
 # versions). We read current prefs, upsert the TokyoNight key, write back.
-THEME_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 terminal_profile="$THEME_DIR/terminal.terminal"
 if [[ -f "$terminal_profile" ]] && command -v python3 >/dev/null 2>&1; then
   python3 - "$terminal_profile" <<'PY'
@@ -52,7 +50,6 @@ else
 fi
 
 # Wallpaper: shipped with the theme.
-THEME_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 wp="$THEME_DIR/wallpaper.png"
 if [[ -f "$wp" ]]; then
   if osascript -e "tell application \"System Events\" to tell every desktop to set picture to POSIX file \"$wp\"" >/dev/null 2>&1; then
