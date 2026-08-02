@@ -21,6 +21,18 @@ vim.opt.rtp:prepend(lazypath)
 
 require("lazy").setup({
   { "folke/tokyonight.nvim", lazy = false, priority = 1000 },
+  { "catppuccin/nvim", name = "catppuccin", lazy = false, priority = 1000 },
+  { "gbprod/nord.nvim", lazy = false, priority = 1000 },
+  { "neanias/everforest-nvim", lazy = false, priority = 1000 },
+  { "ellisonleao/gruvbox.nvim", lazy = false, priority = 1000 },
+  { "rebelot/kanagawa.nvim", lazy = false, priority = 1000 },
+  { "rose-pine/neovim", name = "rose-pine", lazy = false, priority = 1000 },
+  -- ristretto substituted with Monokai Pro (loctvl842/monokai-pro.nvim ristretto filter)
+  { "loctvl842/monokai-pro.nvim", lazy = false, priority = 1000 },
+  -- matte-black substituted with vague (dark, low-saturation minimal theme)
+  { "vague2k/vague.nvim", lazy = false, priority = 1000 },
+  -- osaka-jade substituted with solarized-osaka (craftzdog's jade-tinted port)
+  { "craftzdog/solarized-osaka.nvim", lazy = false, priority = 1000 },
   { "nvim-treesitter/nvim-treesitter", build = ":TSUpdate",
     opts = { highlight = { enable = true }, ensure_installed = {
       "lua","vim","vimdoc","bash","python","javascript","typescript","tsx",
