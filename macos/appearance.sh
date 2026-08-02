@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 # macOS appearance: non-color, scriptable parts only.
-# Theme colors (accent, highlight, wallpaper) live in themes/<name>/macos.sh
-# so they swap with the theme.
+# Theme colors are app-level (Ghostty, tmux, Starship, Neovim, Zed, zsh).
+# macOS accent and wallpaper are permanent manual steps set during install.
 #
 set -euo pipefail
 # shellcheck source=lib/common.sh

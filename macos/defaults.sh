@@ -36,7 +36,7 @@ defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool true
 defaults write com.apple.desktopservices DSDontWriteUSBStores -bool true
 
 # --- Terminal.app ------------------------------------------------------------
-# Profile is set by omacos theme set; just ensure secure keyboard is on.
+# Secure keyboard entry prevents other processes from reading keystrokes.
 defaults write com.apple.Terminal SecureKeyboardEntry -bool true
 
 # --- Screenshots -------------------------------------------------------------
