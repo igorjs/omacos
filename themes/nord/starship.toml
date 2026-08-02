@@ -1,0 +1,13 @@
+# Nord palette block for Starship.
+# Concatenated onto config/starship.toml by `omacos theme set nord`.
+# New themes ship only their own palette block using the same color names.
+
+[palettes.active]
+blue   = "#81a1c1"
+cyan   = "#88c0d0"
+green  = "#a3be8c"
+red    = "#bf616a"
+yellow = "#ebcb8b"
+purple = "#b48ead"
+fg     = "#d8dee9"
+muted  = "#4c566a"
