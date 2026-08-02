@@ -1,6 +1,6 @@
 # OmacOS
 
-One-command macOS setup. Tokyo Night themed. Modular and re-runnable.
+One-command macOS setup. 10 themes. Interactive menu. Modular and re-runnable.
 
 OmacOS is the macOS equivalent of [Omakub](https://omakub.org/) and [Omarchy](https://omarchy.org/): a single `./install.sh` that turns a fresh Mac into a fully configured development environment. Every script is idempotent, so you can re-run it safely at any time. Configs are symlinked from the repo by default, so your settings stay version-controlled.
 
@@ -95,7 +95,7 @@ After the installer finishes, a few things require manual action:
    gh auth login
    ```
 
-4. **Zed: Tokyo Night extension**: Open Zed, press Cmd+Shift+X, search "Tokyo Night", install the extension.
+4. **Zed theme extensions**: Open Zed, press Cmd+Shift+X, and install any theme extensions you want to use. The extensions needed by the built-in themes are pre-listed in `config/zed.extensions` and install automatically when Zed first opens. For reference: Tokyo Night, Catppuccin, Nord, Everforest, and Kanagawa are extensions; Gruvbox Dark, Rose Pine, One Dark, and Solarized Dark are built into Zed.
 
 5. **macOS Sequoia appearance tweaks**: System Settings > Appearance lets you set Icon Style and Folder Color. These settings have no stable scriptable defaults keys, so they require manual selection.
 
@@ -107,23 +107,35 @@ After the installer finishes, a few things require manual action:
 
 ## Theme System
 
-OmacOS ships with the **Tokyo Night** theme. Themes live in `themes/<name>/` and consist of:
+OmacOS ships 10 app-level themes. Themes cover Ghostty, tmux, Starship, Neovim, Zed, and zsh. macOS accent and wallpaper are set once during install and stay fixed.
 
-| File | Purpose |
-|------|---------|
-| `ghostty.conf` | Ghostty theme line |
-| `tmux.conf` | tmux status bar colors |
-| `zed.json` | Zed theme setting |
-| `starship.toml` | Starship color palette |
-| `nvim.lua` | Neovim colorscheme |
-| `zsh.zsh` | zsh-autosuggestions and zsh-syntax-highlighting colors |
-| `macos.sh` | macOS accent color and wallpaper |
-| `wallpaper.png` | Desktop wallpaper |
+### Available themes
+
+| Name | Style |
+|------|-------|
+| `tokyonight` | Tokyo Night Night (default) |
+| `catppuccin` | Catppuccin Mocha |
+| `nord` | Nord |
+| `everforest` | Everforest Dark Hard |
+| `gruvbox` | Gruvbox Dark |
+| `kanagawa` | Kanagawa Wave |
+| `rose-pine` | Rose Pine Main |
+| `ristretto` | Monokai Pro ristretto filter |
+| `matte-black` | vague (dark, desaturated minimal) |
+| `osaka-jade` | Solarized Osaka (solarized-osaka.nvim) |
+
+### Interactive menu
+
+```bash
+omacos
+```
+
+Opens the gum-powered interactive menu. Requires `gum` (installed via Brewfile). Without gum, falls back to `omacos help`.
 
 ### Apply a theme
 
 ```bash
-omacos theme set tokyonight
+omacos theme set catppuccin
 ```
 
 ### List available themes
@@ -132,18 +144,33 @@ omacos theme set tokyonight
 omacos theme list
 ```
 
-### Add a new theme
+### Theme file structure
 
-1. Create `themes/mytheme/` with the files listed above.
-2. Run `omacos theme set mytheme`.
+Each `themes/<name>/` directory ships exactly these 6 files:
+
+| File | Purpose |
+|------|---------|
+| `ghostty.conf` | Ghostty terminal colors |
+| `tmux.conf` | tmux status bar colors |
+| `zed.json` | Zed theme name |
+| `starship.toml` | Starship palette block |
+| `nvim.lua` | Neovim colorscheme setup |
+| `zsh.zsh` | zsh-autosuggestions and zsh-syntax-highlighting colors |
 
 The `starship.toml` in a theme defines a `[palettes.active]` block that gets concatenated onto `config/starship.toml`. The base config uses named palette colors (blue, green, etc.), so themes only need to override those color values.
+
+### Add a new theme
+
+1. Create `themes/mytheme/` with the 6 files listed above.
+2. Run `omacos theme set mytheme`.
 
 ---
 
 ## CLI Reference
 
 ```
+omacos                     Open interactive theme/action menu (requires gum)
+omacos menu [route]        Open menu at a specific route (e.g. theme)
 omacos theme set <name>    Apply a theme to all tools
 omacos theme list          List available themes
 omacos update              Update Homebrew packages, Claude Code, and re-apply theme
@@ -151,6 +178,7 @@ omacos snapshot [label]    Take a macOS defaults snapshot
 omacos export [dir]        Export Brewfile + key defaults plists with a restore.sh
 omacos doctor              Check system health, print pass/fail for all components
 omacos uninstall           Revert the install (security + configs + state by default)
+omacos help                Print command reference
 ```
 
 ---
@@ -294,15 +322,6 @@ A few things cannot be fully scripted on macOS:
 Use `tools/mac-snapshot.sh watch` to discover new scriptable keys as macOS evolves.
 
 ---
-
-## Adding Future Themes
-
-To add Catppuccin, Gruvbox, or any other theme:
-
-1. Create `themes/catppuccin/` (or your theme name).
-2. Add each file following the pattern of `themes/tokyonight/`.
-3. The `starship.toml` in your theme should define `[palettes.active]` with the same color names (blue, cyan, green, red, yellow, purple, fg, muted).
-4. Test with: `omacos theme set catppuccin`
 
 ---
 

@@ -4,6 +4,42 @@ All notable changes to OmacOS are documented here.
 
 ---
 
+## [Unreleased]
+
+### Added
+
+**Interactive menu**
+- `gum` added to Brewfile; bare `omacos` now opens an interactive gum menu for theme selection and common actions
+- `omacos menu [route]` deep-links into a specific menu route (e.g. `omacos menu theme`)
+- `lib/menu.json` — data-driven menu structure (items, icons, actions, providers)
+- `lib/menu.sh` — gum renderer, provider system, and dispatch logic
+- `omacos doctor` now checks for `gum` in its binary health scan
+- `omacos help` / `omacos -h` / `omacos --help` — explicit help alias
+- Falls back to `omacos help` when gum is absent
+
+**Theme catalog (9 new themes)**
+- `themes/catppuccin/` — Catppuccin Mocha
+- `themes/nord/` — Nord
+- `themes/everforest/` — Everforest Dark Hard
+- `themes/gruvbox/` — Gruvbox Dark
+- `themes/kanagawa/` — Kanagawa Wave
+- `themes/rose-pine/` — Rose Pine Main
+- `themes/ristretto/` — Monokai Pro ristretto filter (Neovim) + One Dark (Zed)
+- `themes/matte-black/` — vague.nvim dark minimal (Neovim) + One Dark (Zed)
+- `themes/osaka-jade/` — solarized-osaka.nvim (Neovim) + Solarized Dark (Zed)
+- `config/zed.extensions` — catppuccin, nord, everforest, kanagawa extensions added
+- `config/nvim/init.lua` — 9 colorscheme plugins added (lazy=false, priority=1000 each)
+
+**Tests**
+- `tests/theme_parity.bats` — data-driven guard: every `themes/*/` must ship 6 app-level files, valid `zed.json`, a `colorscheme` call in `nvim.lua`, and a cross-check that the colorscheme name is provisioned in `config/nvim/init.lua`
+
+### Changed
+
+- Themes are now app-level only (Ghostty, tmux, Starship, Neovim, Zed, zsh). macOS accent and wallpaper are permanent manual steps set during install.
+- `themes/tokyonight/macos.sh`, `themes/tokyonight/wallpaper.png`, and `tools/gen-wallpaper.sh` removed; `macos/appearance.sh` and `macos/defaults.sh` updated to reflect this.
+
+---
+
 ## [1.0.0] - 2026-06-08
 
 Initial release.
@@ -41,9 +77,8 @@ Initial release.
 
 **Theme system**
 - `bin/omacos` — CLI: `theme set/list`, `update`, `snapshot`, `export`, `doctor`
-- `themes/tokyonight/` — Tokyo Night theme for Ghostty, tmux, Zed, Neovim, Starship, zsh, macOS accent/wallpaper
+- `themes/tokyonight/` — Tokyo Night theme for Ghostty, tmux, Zed, Neovim, Starship, zsh
 - `tools/mac-snapshot.sh` — before/after macOS defaults diff tool
-- `tools/gen-wallpaper.sh` — Tokyo Night wallpaper generator
 
 ### Known quirks
 
