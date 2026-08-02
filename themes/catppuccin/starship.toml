@@ -1,0 +1,13 @@
+# Catppuccin Mocha palette block for Starship.
+# Concatenated onto config/starship.toml by `omacos theme set catppuccin`.
+# New themes ship only their own palette block using the same color names.
+
+[palettes.active]
+blue   = "#89b4fa"
+cyan   = "#94e2d5"
+green  = "#a6e3a1"
+red    = "#f38ba8"
+yellow = "#f9e2af"
+purple = "#cba6f7"
+fg     = "#cdd6f4"
+muted  = "#585b70"
