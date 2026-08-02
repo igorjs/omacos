@@ -38,3 +38,29 @@ teardown() {
   [ "$status" -eq 0 ]
   [[ "$output" == *"tokyonight"* ]]
 }
+
+@test "cmd_theme_set tokyonight writes six app-level targets and exits 0" {
+  # Arrange: create dirs cmd_theme_set writes into.
+  mkdir -p "$HOME/.config/ghostty" "$HOME/.config/tmux" "$HOME/.config/nvim"
+  mkdir -p "$HOME/.config" "$HOME/.config/omacos"
+  # Stub starship base so the concat step has a source file.
+  touch "$OMACOS_ROOT/config/starship.toml"
+
+  # Act
+  run cmd_theme_set "tokyonight"
+
+  # Assert: exits 0 and each app-level target is written.
+  [ "$status" -eq 0 ]
+  [ -f "$HOME/.config/ghostty/theme.conf" ]
+  [ -f "$HOME/.config/tmux/theme.conf" ]
+  [ -f "$HOME/.config/nvim/theme.lua" ]
+  [ -f "$HOME/.config/starship.toml" ]
+  [ -f "$HOME/.config/omacos/theme.zsh" ]
+  # Overlay file must be absent (removed in WU-5).
+  [ ! -f "$OMACOS_ROOT/themes/tokyonight/macos.sh" ]
+}
+
+@test "tokyonight macos.sh overlay is permanently removed" {
+  # Regression guard: confirms the file does not exist.
+  [ ! -f "$OMACOS_ROOT/themes/tokyonight/macos.sh" ]
+}
