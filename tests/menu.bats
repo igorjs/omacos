@@ -130,3 +130,43 @@ teardown() {
   [[ "$output" == *"Doctor"* ]]
   [[ "$output" == *"Quit"* ]]
 }
+
+# ---------------------------------------------------------------------------
+# 10. omacos help prints usage (bin/omacos dispatch integration)
+# ---------------------------------------------------------------------------
+
+@test "omacos help prints usage" {
+  # Arrange: source bin/omacos in a subshell (dispatch guard prevents execution)
+  run bash -c "
+    export HOME='$TEST_HOME'
+    export OMACOS_ROOT='$REPO'
+    mkdir -p '$TEST_HOME/.config/omacos'
+    source '$REPO/bin/omacos'
+    usage
+  "
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"omacos"* ]]
+  [[ "$output" == *"theme"* ]]
+}
+
+# ---------------------------------------------------------------------------
+# 11. bare omacos with gum absent falls back to usage (exit 0)
+# ---------------------------------------------------------------------------
+
+@test "cmd_menu falls back to usage when gum is absent" {
+  run bash -c "
+    export HOME='$TEST_HOME'
+    export OMACOS_ROOT='$REPO'
+    mkdir -p '$TEST_HOME/.config/omacos'
+    source '$REPO/bin/omacos'
+    # Shadow gum to make it look absent
+    function command() {
+      if [[ \"\$*\" == *'gum'* ]]; then return 1; fi
+      builtin command \"\$@\"
+    }
+    export -f command
+    cmd_menu
+  "
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"omacos"* ]]
+}

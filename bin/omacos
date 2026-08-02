@@ -36,6 +36,19 @@ OMACOS_ROOT="$(find_root)"
 STATE_DIR="$HOME/.config/omacos"
 mkdir -p "$STATE_DIR"
 
+# --- interactive menu --------------------------------------------------------
+cmd_menu() {
+  local route="${1:-}"
+  # Require gum; fall back to usage when absent so bare `omacos` still exits 0.
+  command -v gum >/dev/null 2>&1 || {
+    usage
+    return
+  }
+  # shellcheck source=lib/menu.sh
+  source "$OMACOS_ROOT/lib/menu.sh"
+  menu_render "$route"
+}
+
 # --- zed theme: update the "theme" key in-place (JSONC-safe) ----------------
 zed_set_theme() {
   local theme_name="$1" target="$2"
@@ -268,6 +281,7 @@ cmd_doctor() {
   check_count "zoxide" command -v zoxide
   check_count "lazygit" command -v lazygit
   warn_count "mas" command -v mas
+  warn_count "gum (interactive menu)" command -v gum
   check_count "aerospace" command -v aerospace
   check_count "claude" command -v claude
   check_count "ghostty (app)" test -d "/Applications/Ghostty.app"
@@ -498,6 +512,8 @@ usage() {
 OmacOS: opinionated, theme-able macOS setup
 
 Usage:
+  omacos                                               Open the interactive menu (requires gum)
+  omacos menu [route]                                  Open menu at route (e.g. omacos menu theme)
   omacos theme list                                    List available themes
   omacos theme set <name>                              Switch to a theme and reload apps
   omacos update                                        brew update + bundle, mise + nvim + Claude, re-apply theme
@@ -505,6 +521,7 @@ Usage:
   omacos export [dir]                                  Export Brewfile + defaults + restore.sh
   omacos doctor                                        Check that everything is in place
   omacos uninstall [--all|--defaults|--packages] [--dry-run]   Revert OmacOS changes
+  omacos help                                          Show this usage
 USAGE
 }
 
@@ -530,7 +547,9 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
     export) cmd_export "$@" ;;
     doctor) cmd_doctor ;;
     uninstall) cmd_uninstall "$@" ;;
-    "" | -h | --help | help) usage ;;
+    menu) cmd_menu "$@" ;;
+    "") cmd_menu ;;
+    -h | --help | help) usage ;;
     *)
       usage
       exit 2
