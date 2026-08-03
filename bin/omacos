@@ -152,14 +152,7 @@ cmd_theme_set() {
     ok "Shell color overlay written (takes effect in new shells)"
   fi
 
-  # 7. macOS theme overlay (accent, highlight, wallpaper, MANUAL hints).
-  if [[ -x "$td/macos.sh" ]]; then
-    "$td/macos.sh"
-  elif [[ -f "$td/macos.sh" ]]; then
-    bash "$td/macos.sh"
-  fi
-
-  # 8. Remember active theme.
+  # 7. Remember active theme.
   echo "$name" >"$STATE_DIR/current_theme"
   ok "Active theme: $name"
 }
