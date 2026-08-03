@@ -48,16 +48,19 @@ teardown() {
 # ---------------------------------------------------------------------------
 
 @test "menu_provider_themes marks active theme with checkmark" {
-  mkdir -p "$OMACOS_ROOT/themes/tokyonight" "$OMACOS_ROOT/themes/nord"
+  # Use a sandboxed OMACOS_ROOT so theme dirs don't leak into the real repo.
+  local FAKE_ROOT
+  FAKE_ROOT="$(mktemp -d)"
+  mkdir -p "$FAKE_ROOT/themes/tokyonight" "$FAKE_ROOT/themes/nord"
   echo "tokyonight" >"$HOME/.config/omacos/current_theme"
-  export OMACOS_ROOT
 
-  run menu_provider_themes "tokyonight"
+  OMACOS_ROOT="$FAKE_ROOT" run menu_provider_themes "tokyonight"
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"tokyonight  ✓"* ]]
   [[ "$output" == *"nord"* ]]
   [[ "$output" != *"nord  ✓"* ]]
+  rm -rf "$FAKE_ROOT"
 }
 
 # ---------------------------------------------------------------------------
@@ -65,10 +68,13 @@ teardown() {
 # ---------------------------------------------------------------------------
 
 @test "menu_provider_themes unlisted theme has no checkmark" {
-  mkdir -p "$OMACOS_ROOT/themes/tokyonight"
-  run menu_provider_themes "nord"
+  local FAKE_ROOT
+  FAKE_ROOT="$(mktemp -d)"
+  mkdir -p "$FAKE_ROOT/themes/tokyonight"
+  OMACOS_ROOT="$FAKE_ROOT" run menu_provider_themes "nord"
   [ "$status" -eq 0 ]
   [[ "$output" != *"tokyonight  ✓"* ]]
+  rm -rf "$FAKE_ROOT"
 }
 
 # ---------------------------------------------------------------------------
