@@ -11,6 +11,7 @@ brew "tmux"
 brew "starship"
 brew "zsh-syntax-highlighting"
 brew "zsh-autosuggestions"
+brew "gum"
 
 # CLI essentials
 brew "ripgrep"

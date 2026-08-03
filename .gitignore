@@ -1,2 +1,6 @@
 *.bak.*
 .DS_Store
+.claude/designs/
+.claude/plans/
+.claude/implement/
+.claude/worktrees/
