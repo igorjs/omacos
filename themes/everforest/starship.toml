@@ -1,0 +1,13 @@
+# Everforest Dark Hard palette block for Starship.
+# Concatenated onto config/starship.toml by `omacos theme set everforest`.
+# New themes ship only their own palette block using the same color names.
+
+[palettes.active]
+blue   = "#7fbbb3"
+cyan   = "#83c092"
+green  = "#a7c080"
+red    = "#e67e80"
+yellow = "#dbbc7f"
+purple = "#d699b6"
+fg     = "#d3c6aa"
+muted  = "#5c6a72"
