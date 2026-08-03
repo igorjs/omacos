@@ -1,0 +1,13 @@
+# Matte Black (vague.nvim palette) palette block for Starship.
+# Concatenated onto config/starship.toml by `omacos theme set matte-black`.
+# New themes ship only their own palette block using the same color names.
+
+[palettes.active]
+blue   = "#7b8fa8"
+cyan   = "#7ba8a8"
+green  = "#7b9c7b"
+red    = "#c07b7b"
+yellow = "#c0b07b"
+purple = "#9b7ba8"
+fg     = "#a8a8b3"
+muted  = "#2a2a2d"

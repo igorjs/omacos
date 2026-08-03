@@ -1,0 +1,13 @@
+# Osaka Jade (solarized-osaka.nvim) palette block for Starship.
+# Concatenated onto config/starship.toml by `omacos theme set osaka-jade`.
+# New themes ship only their own palette block using the same color names.
+
+[palettes.active]
+blue   = "#268bd2"
+cyan   = "#2aa198"
+green  = "#859900"
+red    = "#dc322f"
+yellow = "#b58900"
+purple = "#6c71c4"
+fg     = "#839496"
+muted  = "#586e75"

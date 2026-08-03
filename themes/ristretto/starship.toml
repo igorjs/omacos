@@ -1,0 +1,13 @@
+# Ristretto (Monokai Pro ristretto filter) palette block for Starship.
+# Concatenated onto config/starship.toml by `omacos theme set ristretto`.
+# New themes ship only their own palette block using the same color names.
+
+[palettes.active]
+blue   = "#fd9353"
+cyan   = "#5ad4e6"
+green  = "#7bd88f"
+red    = "#fc618d"
+yellow = "#fce566"
+purple = "#948ae3"
+fg     = "#fff1f3"
+muted  = "#3e2633"
