@@ -1,0 +1,13 @@
+# Kanagawa Wave palette block for Starship.
+# Concatenated onto config/starship.toml by `omacos theme set kanagawa`.
+# New themes ship only their own palette block using the same color names.
+
+[palettes.active]
+blue   = "#7e9cd8"
+cyan   = "#6a9589"
+green  = "#76946a"
+red    = "#c34043"
+yellow = "#c0a36e"
+purple = "#957fb8"
+fg     = "#dcd7ba"
+muted  = "#727169"

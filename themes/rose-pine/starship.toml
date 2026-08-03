@@ -1,0 +1,13 @@
+# Rose Pine (Main) palette block for Starship.
+# Concatenated onto config/starship.toml by `omacos theme set rose-pine`.
+# New themes ship only their own palette block using the same color names.
+
+[palettes.active]
+blue   = "#9ccfd8"
+cyan   = "#ebbcba"
+green  = "#31748f"
+red    = "#eb6f92"
+yellow = "#f6c177"
+purple = "#c4a7e7"
+fg     = "#e0def4"
+muted  = "#6e6a86"
