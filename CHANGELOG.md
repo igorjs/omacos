@@ -4,7 +4,7 @@ All notable changes to OmacOS are documented here.
 
 ---
 
-## [Unreleased]
+## [1.1.0] - 2026-08-03
 
 ### Added
 
