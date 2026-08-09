@@ -58,6 +58,61 @@ zed_set_theme() {
   sed -i '' "s|\"theme\":.*|\"theme\": \"${theme_name}\",|" "$target"
 }
 
+# --- wallpaper apply ---------------------------------------------------------
+_wallpaper_apply() {
+  local img="$1"
+  if osascript - "$img" <<'OSA' >/dev/null 2>&1
+on run argv
+  set imgPath to POSIX file (item 1 of argv)
+  with timeout of 10 seconds
+    tell application "System Events" to tell every desktop to set picture to imgPath
+  end timeout
+end run
+OSA
+  then
+    killall WallpaperAgent >/dev/null 2>&1 || true
+    ok "Wallpaper applied"
+  else
+    note "Could not set wallpaper automatically. Grant Automation access (System Settings > Privacy & Security > Automation) and retry. Image: $img"
+  fi
+}
+
+cmd_wallpaper_set() {
+  local name="${1:-}"
+  # Default to the active theme; fall back to tokyonight when not set.
+  if [[ -z "$name" ]]; then
+    if [[ -f "$STATE_DIR/current_theme" ]]; then
+      name="$(tr -d '[:space:]' <"$STATE_DIR/current_theme")"
+    fi
+    [[ -n "$name" ]] || name="tokyonight"
+  fi
+  local td="$OMACOS_ROOT/themes/$name"
+  [[ -d "$td" ]] || { fail "Unknown theme: $name"; exit 1; }
+  local wp="$td/wallpaper.jpg"
+  if [[ ! -f "$wp" ]]; then
+    note "No wallpaper bundled for theme: $name"
+    return 0
+  fi
+  cp "$wp" "$STATE_DIR/wallpaper.jpg" || { note "Could not copy wallpaper to $STATE_DIR (disk space/permissions?)"; return 0; }
+  _wallpaper_apply "$STATE_DIR/wallpaper.jpg"
+}
+
+cmd_wallpaper_mode() {
+  local mode="${1:-}"
+  # Note: no theme should be named 'auto' or 'manual'; those names are reserved
+  # as mode keywords and would be shadowed by the wallpaper dispatch logic.
+  case "$mode" in
+    auto|manual)
+      echo "$mode" >"$STATE_DIR/wallpaper_mode"
+      ok "Wallpaper mode: $mode"
+      ;;
+    *)
+      fail "usage: omacos wallpaper auto|manual"
+      exit 2
+      ;;
+  esac
+}
+
 # --- theme list / set --------------------------------------------------------
 cmd_theme_list() {
   info "Available themes (in $OMACOS_ROOT/themes):"
@@ -155,6 +210,25 @@ cmd_theme_set() {
   # 7. Remember active theme.
   echo "$name" >"$STATE_DIR/current_theme"
   ok "Active theme: $name"
+
+  # 8. Wallpaper: apply per-theme image when mode is 'auto'.
+  # cmd_update calls cmd_theme_set to re-apply the active theme; under auto mode
+  # this re-applies the same wallpaper (idempotent, no visible change).
+  local wp_mode="manual"
+  if [[ -f "$STATE_DIR/wallpaper_mode" ]]; then
+    wp_mode="$(tr -d '[:space:]' <"$STATE_DIR/wallpaper_mode")"
+  fi
+  case "$wp_mode" in
+    auto)
+      if [[ -f "$OMACOS_ROOT/themes/$name/wallpaper.jpg" ]]; then
+        cmd_wallpaper_set "$name"
+      fi
+      ;;
+    manual) ;;
+    *)
+      note "Unknown wallpaper_mode '$wp_mode'; treating as manual"
+      ;;
+  esac
 }
 
 # --- update ------------------------------------------------------------------
@@ -509,6 +583,8 @@ Usage:
   omacos menu [route]                                  Open menu at route (e.g. omacos menu theme)
   omacos theme list                                    List available themes
   omacos theme set <name>                              Switch to a theme and reload apps
+  omacos wallpaper [theme]                             Apply a theme's wallpaper now (default: active theme)
+  omacos wallpaper auto|manual                         Toggle auto-swap on theme change (default: manual)
   omacos update                                        brew update + bundle, mise + nvim + Claude, re-apply theme
   omacos snapshot [label]                              Snapshot macOS defaults
   omacos export [dir]                                  Export Brewfile + defaults + restore.sh
@@ -533,6 +609,14 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
           usage
           exit 2
           ;;
+      esac
+      ;;
+    wallpaper)
+      sub="${1:-}"
+      shift || true
+      case "$sub" in
+        auto|manual) cmd_wallpaper_mode "$sub" ;;
+        *) cmd_wallpaper_set "$sub" ;;
       esac
       ;;
     update) cmd_update ;;
