@@ -3,7 +3,7 @@
 #
 # macOS appearance: non-color, scriptable parts only.
 # Theme colors are app-level (Ghostty, tmux, Starship, Neovim, Zed, zsh).
-# macOS accent and wallpaper are permanent manual steps set during install.
+# macOS accent is a manual step. Wallpaper: use 'omacos wallpaper' at any time.
 #
 set -euo pipefail
 # shellcheck source=lib/common.sh
