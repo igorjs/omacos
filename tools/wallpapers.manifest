@@ -1,0 +1,28 @@
+# OmacOS wallpaper provenance manifest
+# theme|render-url|artwork|license
+#
+# All works are public domain (pre-1929 or explicitly PD). Render URLs target
+# a <=3840px-wide JPEG derivative via Wikimedia Commons thumbnail service or
+# the original file when already within budget.
+#
+# Run tools/fetch-wallpapers.sh to regenerate themes/*/wallpaper.jpg from these URLs.
+
+tokyonight|https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/3840px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg|Vincent van Gogh, The Starry Night (1889)|Public Domain
+
+kanagawa|https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/The_Great_Wave_off_Kanagawa.jpg/3840px-The_Great_Wave_off_Kanagawa.jpg|Katsushika Hokusai, The Great Wave off Kanagawa (c.1831)|Public Domain
+
+nord|https://upload.wikimedia.org/wikipedia/commons/0/0c/Caspar_David_Friedrich_-_Das_Eismeer_-_Hamburger_Kunsthalle_-_02.jpg|Caspar David Friedrich, Das Eismeer / The Sea of Ice (1823)|Public Domain
+
+everforest|https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Shishkin%2C_Ivan_-_Morning_in_a_Pine_Forest.jpg/3840px-Shishkin%2C_Ivan_-_Morning_in_a_Pine_Forest.jpg|Ivan Shishkin, Morning in a Pine Forest (1889)|Public Domain
+
+gruvbox|https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Levitan_Zolotaya_Osen.jpg/3840px-Levitan_Zolotaya_Osen.jpg|Isaac Levitan, Golden Autumn (1895)|Public Domain
+
+rose-pine|https://upload.wikimedia.org/wikipedia/commons/e/ea/Henri_Fantin-Latour_-_Roses_de_Nice_on_a_Table_A11169.jpg|Henri Fantin-Latour, Roses de Nice on a Table (1882)|Public Domain
+
+catppuccin|https://upload.wikimedia.org/wikipedia/commons/6/66/Water_Lilies%2C_Water_Landscape%2C_1908%2C_by_Claude_Monet_%281840-1926%29_-_IMG_7168.JPG|Claude Monet, Water Lilies / Water Landscape (1908)|Public Domain
+
+ristretto|https://upload.wikimedia.org/wikipedia/commons/3/3e/Pieter_Claesz_-_Breakfast_-_Google_Art_Project.jpg|Pieter Claesz, Breakfast (1646)|Public Domain
+
+osaka-jade|https://upload.wikimedia.org/wikipedia/commons/thumb/d/da/The_Lake_at_Hakone_%28Hakone_Kosui_Zu%29%2C_Station_10%2C_from_the_series_Fifty-Three_Stations_of_the_Tokaido_Road_%28Tokaido_Gojusantsugi_no_Uchi%29%2C_Utagawa_Hiroshige%2C_1832-1834_-_PR.972.63.11.tif/lossy-page1-3840px-thumbnail.tif.jpg|Utagawa Hiroshige, The Lake at Hakone (Tokaido series, Station 10), c.1832-1834|Public Domain
+
+matte-black|https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/James_McNeill_Whistler_-_Nocturne-_Blue_and_Gold--Southampton_Water_-_Google_Art_Project.jpg/3840px-James_McNeill_Whistler_-_Nocturne-_Blue_and_Gold--Southampton_Water_-_Google_Art_Project.jpg|James McNeill Whistler, Nocturne: Blue and Gold, Southampton Water (1872)|Public Domain
