@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: Apache-2.0
 #
-# tools/fetch-wallpapers.sh — regenerate themes/*/wallpaper.jpg from the manifest.
+# tools/fetch-wallpapers.sh: regenerate themes/*/wallpaper.jpg from the manifest.
 #
 # Authoring tool only; not run at install. Requires macOS (sips built-in).
 # Each row in tools/wallpapers.manifest is fetched, downscaled with sips to a
-# max 3840px side at jpeg quality 82, and written to themes/<theme>/wallpaper.jpg.
+# max 2560px side at jpeg quality 82, and written to themes/<theme>/wallpaper.jpg.
 #
 # Usage: bash tools/fetch-wallpapers.sh
 #
@@ -73,7 +73,7 @@ while IFS='|' read -r theme url artwork _license; do
   out="$REPO/themes/$theme/wallpaper.jpg"
   mkdir -p "$(dirname "$out")"
 
-  # Downscale to max 3840px on longest side; convert to JPEG at quality 82.
+  # Downscale to max 2560px on longest side; convert to JPEG at quality 82.
   if ! sips -Z 2560 -s format jpeg -s formatOptions 82 "$tmp" --out "$out" >/dev/null 2>&1; then
     fail "  sips conversion failed for $theme"
     FAIL=$((FAIL + 1))

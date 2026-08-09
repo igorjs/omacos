@@ -8,13 +8,13 @@ All notable changes to OmacOS are documented here.
 
 ### Added
 
-- `omacos wallpaper [theme]` — applies a theme's bundled wallpaper to the macOS desktop
-- `omacos wallpaper auto|manual` — opt-in auto-swap mode; when `auto`, every `omacos theme set` also sets the matching wallpaper (default: `manual`, no automatic changes)
+- `omacos wallpaper [theme]`: applies a theme's bundled wallpaper to the macOS desktop
+- `omacos wallpaper auto|manual`: opt-in auto-swap mode; when `auto`, every `omacos theme set` also sets the matching wallpaper (default: `manual`, no automatic changes)
 - 10 bundled public-domain wallpaper JPEGs (`themes/*/wallpaper.jpg`), one per theme, repacked to 2560px wide JPEG via `sips`
-- `tools/fetch-wallpapers.sh` — fetch-and-repack script; sources listed in `tools/wallpapers.manifest`
+- `tools/fetch-wallpapers.sh`: fetch-and-repack script; sources listed in `tools/wallpapers.manifest`
 - `lib/menu.json` Wallpaper item (`omacos wallpaper` action) in the interactive menu
-- `tests/wallpaper.bats` — 13 unit tests covering apply, soft-fail, mode toggle, and `cmd_theme_set` integration
-- `tests/theme_parity.bats` — new `theme_parity: each theme ships a valid wallpaper.jpg` guard
+- `tests/wallpaper.bats`: 13 unit tests covering apply, soft-fail, mode toggle, and `cmd_theme_set` integration
+- `tests/theme_parity.bats`: new `theme_parity: each theme ships a valid wallpaper.jpg` guard
 
 ---
 
