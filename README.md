@@ -107,7 +107,7 @@ After the installer finishes, a few things require manual action:
 
 ## Theme System
 
-OmacOS ships 10 app-level themes. Themes cover Ghostty, tmux, Starship, Neovim, Zed, and zsh. macOS accent and wallpaper are set once during install and stay fixed.
+OmacOS ships 10 app-level themes. Themes cover Ghostty, tmux, Starship, Neovim, Zed, and zsh. Each theme also bundles a curated public-domain painting as a wallpaper (see [Wallpapers](#wallpapers) below).
 
 ### Available themes
 
@@ -146,7 +146,7 @@ omacos theme list
 
 ### Theme file structure
 
-Each `themes/<name>/` directory ships exactly these 6 files:
+Each `themes/<name>/` directory ships these files:
 
 | File | Purpose |
 |------|---------|
@@ -156,13 +156,62 @@ Each `themes/<name>/` directory ships exactly these 6 files:
 | `starship.toml` | Starship palette block |
 | `nvim.lua` | Neovim colorscheme setup |
 | `zsh.zsh` | zsh-autosuggestions and zsh-syntax-highlighting colors |
+| `wallpaper.jpg` | Bundled wallpaper (public-domain painting, 2560px wide) |
 
 The `starship.toml` in a theme defines a `[palettes.active]` block that gets concatenated onto `config/starship.toml`. The base config uses named palette colors (blue, green, etc.), so themes only need to override those color values.
 
 ### Add a new theme
 
-1. Create `themes/mytheme/` with the 6 files listed above.
+1. Create `themes/mytheme/` with the 6 required files listed above.
 2. Run `omacos theme set mytheme`.
+3. Optionally add `themes/mytheme/wallpaper.jpg` (JPEG, 2560px wide) to enable `omacos wallpaper mytheme`.
+
+---
+
+## Wallpapers
+
+Each theme bundles a curated public-domain painting as `themes/<name>/wallpaper.jpg`. The `omacos wallpaper` command applies it to the macOS desktop.
+
+### Apply a wallpaper
+
+```bash
+omacos wallpaper            # apply the active theme's wallpaper
+omacos wallpaper catppuccin # apply a specific theme's wallpaper
+```
+
+The first run triggers a one-time macOS Automation permission prompt. If macOS blocks it, open System Settings > Privacy & Security > Automation and enable the terminal that ran the command, then retry.
+
+### Auto-swap on theme change
+
+By default, `omacos theme set` does not touch your wallpaper (`manual` mode). To swap automatically on every theme change:
+
+```bash
+omacos wallpaper auto    # enable auto-swap
+omacos wallpaper manual  # restore manual control (default)
+```
+
+Under `auto` mode, `omacos update` re-applies the current theme's wallpaper as part of its re-apply step. No visible change occurs since it's the same image.
+
+### Regenerate wallpapers
+
+`tools/fetch-wallpapers.sh` re-fetches all wallpapers from Wikimedia Commons and repacks them to 2560px JPEG (quality 82). Sources are listed in `tools/wallpapers.manifest`.
+
+### Provenance
+
+All bundled wallpapers are public domain (pre-1929 or explicitly PD).
+
+| Theme | Artwork | License |
+|-------|---------|---------|
+| `tokyonight` | Vincent van Gogh, The Starry Night (1889) | Public Domain |
+| `kanagawa` | Katsushika Hokusai, The Great Wave off Kanagawa (c.1831) | Public Domain |
+| `nord` | Caspar David Friedrich, Das Eismeer / The Sea of Ice (1823) | Public Domain |
+| `everforest` | Ivan Shishkin, Morning in a Pine Forest (1889) | Public Domain |
+| `gruvbox` | Isaac Levitan, Golden Autumn (1895) | Public Domain |
+| `rose-pine` | Henri Fantin-Latour, Roses de Nice on a Table (1882) | Public Domain |
+| `catppuccin` | Claude Monet, Water Lilies / Water Landscape (1908) | Public Domain |
+| `ristretto` | Pieter Claesz, Breakfast (1646) | Public Domain |
+| `osaka-jade` | Utagawa Hiroshige, The Lake at Hakone (Tokaido series, Station 10), c.1832-1834 | Public Domain |
+| `matte-black` | James McNeill Whistler, Nocturne: Blue and Gold, Southampton Water (1872) | Public Domain |
 
 ---
 
@@ -176,6 +225,9 @@ omacos theme list          List available themes
 omacos update              Update Homebrew packages, Claude Code, and re-apply theme
 omacos snapshot [label]    Take a macOS defaults snapshot
 omacos export [dir]        Export Brewfile + key defaults plists with a restore.sh
+omacos wallpaper [theme]   Apply a theme's wallpaper (default: active theme)
+omacos wallpaper auto      Swap wallpaper automatically on theme change
+omacos wallpaper manual    Disable auto-swap (default)
 omacos doctor              Check system health, print pass/fail for all components
 omacos uninstall           Revert the install (security + configs + state by default)
 omacos help                Print command reference
