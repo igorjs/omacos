@@ -31,13 +31,19 @@ while IFS='|' read -r theme url artwork _license; do
   theme="$(printf '%s' "$theme" | tr -d '[:space:]')"
   url="$(printf '%s' "$url" | tr -d '[:space:]')"
 
+  # Pause between requests to respect Wikimedia rate limits.
+  [[ "${_first_row:-}" == "1" ]] && sleep 3
+  _first_row=1
+
   info "Fetching $theme: $(printf '%s' "$artwork" | xargs)"
 
   tmp="$(mktemp)"
   # Cleanup tmp on exit from this iteration (use a subshell-safe trap workaround).
   trap 'rm -f "$tmp"' EXIT INT TERM
 
-  if ! curl -fsSL --max-time 120 -o "$tmp" "$url"; then
+  if ! curl -fsSL --max-time 120 \
+      -H "User-Agent: OmacOS/1.1 (https://github.com/igorjs/omacos; igor@getdigital.com.br)" \
+      -o "$tmp" "$url"; then
     fail "  curl failed for $theme ($url)"
     FAIL=$((FAIL + 1))
     rm -f "$tmp"
@@ -63,7 +69,7 @@ while IFS='|' read -r theme url artwork _license; do
   mkdir -p "$(dirname "$out")"
 
   # Downscale to max 3840px on longest side; convert to JPEG at quality 82.
-  if ! sips -Z 3840 -s format jpeg -s formatOptions 82 "$tmp" --out "$out" >/dev/null 2>&1; then
+  if ! sips -Z 2560 -s format jpeg -s formatOptions 82 "$tmp" --out "$out" >/dev/null 2>&1; then
     fail "  sips conversion failed for $theme"
     FAIL=$((FAIL + 1))
     rm -f "$tmp"

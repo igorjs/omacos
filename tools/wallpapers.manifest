@@ -2,8 +2,8 @@
 # theme|render-url|artwork|license
 #
 # All works are public domain (pre-1929 or explicitly PD). Render URLs target
-# a <=3840px-wide JPEG derivative via Wikimedia Commons thumbnail service or
-# the original file when already within budget.
+# a <=2560px-wide JPEG derivative via Wikimedia Commons thumbnail service or
+# the original file when already within budget (sips downscales to 2560px).
 #
 # Run tools/fetch-wallpapers.sh to regenerate themes/*/wallpaper.jpg from these URLs.
 
