@@ -9,13 +9,23 @@ setup() {
   export OMACOS_ROOT="$REPO"
 }
 
-@test "theme_parity: each theme ships the 6 required app-level files" {
+@test "theme_parity: each theme ships all required app-level files" {
   for d in "$OMACOS_ROOT/themes"/*/; do
     [[ -d "$d" ]] || continue
     name="$(basename "$d")"
     for f in ghostty.conf tmux.conf starship.toml zsh.zsh nvim.lua zed.json; do
       [[ -f "$d/$f" ]] || { echo "MISSING: $name/$f"; false; }
     done
+  done
+}
+
+@test "theme_parity: each theme ships a valid wallpaper.jpg" {
+  for d in "$OMACOS_ROOT/themes"/*/; do
+    [[ -d "$d" ]] || continue
+    name="$(basename "$d")"
+    wp="$d/wallpaper.jpg"
+    [[ -s "$wp" ]] || { echo "MISSING or empty: $name/wallpaper.jpg"; false; }
+    file --brief "$wp" | grep -qi jpeg || { echo "NOT A JPEG: $name/wallpaper.jpg"; false; }
   done
 }
 
