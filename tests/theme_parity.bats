@@ -19,12 +19,16 @@ setup() {
   done
 }
 
-@test "theme_parity: each theme ships a valid wallpaper.jpg" {
+@test "theme_parity: any bundled wallpaper.jpg is a valid JPEG" {
+  # Wallpaper is optional per theme (see README, "Add a new theme"): a theme may
+  # ship none and omacos degrades gracefully. But when present it must be a
+  # non-empty, valid JPEG, so a broken or placeholder asset can't slip through.
   for d in "$OMACOS_ROOT/themes"/*/; do
     [[ -d "$d" ]] || continue
     name="$(basename "$d")"
     wp="$d/wallpaper.jpg"
-    [[ -s "$wp" ]] || { echo "MISSING or empty: $name/wallpaper.jpg"; false; }
+    [[ -e "$wp" ]] || continue
+    [[ -s "$wp" ]] || { echo "EMPTY: $name/wallpaper.jpg"; false; }
     file --brief "$wp" | grep -qi jpeg || { echo "NOT A JPEG: $name/wallpaper.jpg"; false; }
   done
 }
