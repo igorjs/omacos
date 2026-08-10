@@ -88,6 +88,40 @@ _install_theme_set_stubs() {
 }
 
 # ---------------------------------------------------------------------------
+# Scenario 1b: injection safety — the path travels via argv, never into the
+# AppleScript body. Uses a REAL executable osascript on PATH (higher fidelity
+# than a bash-function spy: it exercises the heredoc-on-stdin + argv path).
+# ---------------------------------------------------------------------------
+
+@test "wallpaper: _wallpaper_apply passes the path via argv, not into the script body" {
+  local spydir="$BATS_TEST_TMPDIR/spybin"
+  mkdir -p "$spydir"
+  cat > "$spydir/osascript" <<'SPY'
+#!/usr/bin/env bash
+printf '%s\n' "$@" > "$SPY_ARGV"
+cat > "$SPY_STDIN"
+exit 0
+SPY
+  chmod +x "$spydir/osascript"
+  printf '#!/usr/bin/env bash\nexit 0\n' > "$spydir/killall"
+  chmod +x "$spydir/killall"
+  export SPY_ARGV="$BATS_TEST_TMPDIR/argv.txt" SPY_STDIN="$BATS_TEST_TMPDIR/stdin.txt"
+  export PATH="$spydir:$PATH"
+
+  # Hostile path: spaces, a double-quote, and a command substitution string.
+  local evil='/tmp/a b/$(touch '"$BATS_TEST_TMPDIR"'/PWNED)".jpg'
+  run _wallpaper_apply "$evil"
+
+  [ "$status" -eq 0 ]
+  # '-' is argv item 1 (read script from stdin); the image path is item 2, verbatim.
+  [ "$(sed -n 2p "$SPY_ARGV")" = "$evil" ]
+  # The path text must never appear inside the AppleScript body...
+  ! grep -qF 'PWNED' "$SPY_STDIN"
+  # ...and the command substitution must never have run.
+  [ ! -e "$BATS_TEST_TMPDIR/PWNED" ]
+}
+
+# ---------------------------------------------------------------------------
 # Scenario 2: osascript soft-fail — exits 0, prints note
 # ---------------------------------------------------------------------------
 
@@ -237,6 +271,27 @@ _install_theme_set_stubs() {
 @test "wallpaper: cmd_wallpaper_mode bogus arg exits 2" {
   run cmd_wallpaper_mode "bogus"
   [ "$status" -eq 2 ]
+}
+
+# ---------------------------------------------------------------------------
+# Scenario 8b: `wallpaper set <theme>` dispatch alias routes to cmd_wallpaper_set
+# ---------------------------------------------------------------------------
+
+@test "wallpaper: dispatch 'wallpaper set <theme>' applies that theme" {
+  local FAKE_ROOT; FAKE_ROOT="$(mktemp -d)"
+  mkdir -p "$FAKE_ROOT/themes/nord"
+  echo "nord-src" > "$FAKE_ROOT/themes/nord/wallpaper.jpg"
+  # Stub osascript + killall on PATH so no real GUI call happens on macOS.
+  local spydir="$BATS_TEST_TMPDIR/setbin"; mkdir -p "$spydir"
+  printf '#!/usr/bin/env bash\nexit 0\n' > "$spydir/osascript"; chmod +x "$spydir/osascript"
+  printf '#!/usr/bin/env bash\nexit 0\n' > "$spydir/killall"; chmod +x "$spydir/killall"
+
+  run env PATH="$spydir:$PATH" HOME="$TEST_HOME" OMACOS_ROOT="$FAKE_ROOT" \
+    bash "$REPO/bin/omacos" wallpaper set nord
+
+  [ "$status" -eq 0 ]
+  [ -f "$STATE_DIR/wallpaper.jpg" ]
+  grep -qx "nord-src" "$STATE_DIR/wallpaper.jpg"
 }
 
 # ---------------------------------------------------------------------------

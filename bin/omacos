@@ -99,8 +99,8 @@ cmd_wallpaper_set() {
 
 cmd_wallpaper_mode() {
   local mode="${1:-}"
-  # Note: no theme should be named 'auto' or 'manual'; those names are reserved
-  # as mode keywords and would be shadowed by the wallpaper dispatch logic.
+  # Note: no theme should be named 'auto', 'manual', or 'set'; those names are
+  # reserved as wallpaper sub-commands and would be shadowed by the dispatch logic.
   case "$mode" in
     auto|manual)
       echo "$mode" >"$STATE_DIR/wallpaper_mode"
@@ -616,6 +616,9 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
       shift || true
       case "$sub" in
         auto|manual) cmd_wallpaper_mode "$sub" ;;
+        # Accept `wallpaper set <theme>` as an alias for `wallpaper <theme>`, so
+        # muscle memory from `theme set <name>` doesn't fail with "Unknown theme: set".
+        set) cmd_wallpaper_set "${1:-}" ;;
         *) cmd_wallpaper_set "$sub" ;;
       esac
       ;;
