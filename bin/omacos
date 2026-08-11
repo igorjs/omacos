@@ -61,7 +61,7 @@ zed_set_theme() {
 # --- wallpaper apply ---------------------------------------------------------
 _wallpaper_apply() {
   local img="$1"
-  if osascript - "$img" <<'OSA' >/dev/null 2>&1
+  if osascript - "$img" <<'OSA' >/dev/null 2>&1; then
 on run argv
   set imgPath to POSIX file (item 1 of argv)
   with timeout of 10 seconds
@@ -69,7 +69,6 @@ on run argv
   end timeout
 end run
 OSA
-  then
     killall WallpaperAgent >/dev/null 2>&1 || true
     ok "Wallpaper applied"
   else
@@ -87,13 +86,19 @@ cmd_wallpaper_set() {
     [[ -n "$name" ]] || name="tokyonight"
   fi
   local td="$OMACOS_ROOT/themes/$name"
-  [[ -d "$td" ]] || { fail "Unknown theme: $name"; exit 1; }
+  [[ -d "$td" ]] || {
+    fail "Unknown theme: $name"
+    exit 1
+  }
   local wp="$td/wallpaper.jpg"
   if [[ ! -f "$wp" ]]; then
     note "No wallpaper bundled for theme: $name"
     return 0
   fi
-  cp "$wp" "$STATE_DIR/wallpaper.jpg" || { note "Could not copy wallpaper to $STATE_DIR (disk space/permissions?)"; return 0; }
+  cp "$wp" "$STATE_DIR/wallpaper.jpg" || {
+    note "Could not copy wallpaper to $STATE_DIR (disk space/permissions?)"
+    return 0
+  }
   _wallpaper_apply "$STATE_DIR/wallpaper.jpg"
 }
 
@@ -102,7 +107,7 @@ cmd_wallpaper_mode() {
   # Note: no theme should be named 'auto', 'manual', or 'set'; those names are
   # reserved as wallpaper sub-commands and would be shadowed by the dispatch logic.
   case "$mode" in
-    auto|manual)
+    auto | manual)
       echo "$mode" >"$STATE_DIR/wallpaper_mode"
       ok "Wallpaper mode: $mode"
       ;;
@@ -615,7 +620,7 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
       sub="${1:-}"
       shift || true
       case "$sub" in
-        auto|manual) cmd_wallpaper_mode "$sub" ;;
+        auto | manual) cmd_wallpaper_mode "$sub" ;;
         # Accept `wallpaper set <theme>` as an alias for `wallpaper <theme>`, so
         # muscle memory from `theme set <name>` doesn't fail with "Unknown theme: set".
         set) cmd_wallpaper_set "${1:-}" ;;
