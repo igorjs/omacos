@@ -4,6 +4,7 @@
     { "id": "update",    "icon": "󰚰", "label": "Update",    "action": "omacos update" },
     { "id": "doctor",    "icon": "󰓙", "label": "Doctor",    "action": "omacos doctor" },
     { "id": "uninstall", "icon": "󰆴", "label": "Uninstall", "action": "omacos uninstall" },
+    { "id": "wallpaper", "icon": "󰋩", "label": "Wallpaper", "action": "omacos wallpaper" },
     { "id": "quit",      "icon": "󰗼", "label": "Quit",      "action": "__quit__" }
   ]
 }

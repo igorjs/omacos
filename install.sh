@@ -276,6 +276,7 @@ add_manual "Grant Full Disk Access to your terminal (System Settings > Privacy &
 add_manual "Enroll Touch ID and set its toggles: System Settings > Touch ID & Password (biometric, not scriptable)"
 add_manual "Spotlight > Results from Apps: prune per-app results by hand (no stable defaults key on Tahoe)"
 add_manual "Log out and back in for key repeat, locale, and input source to fully take effect"
+add_manual "Set a theme wallpaper anytime: 'omacos wallpaper' (or 'omacos wallpaper auto' to swap it on every theme change)"
 
 # --- Summary -----------------------------------------------------------------
 step "Done"

@@ -134,6 +134,7 @@ teardown() {
   [[ "$output" == *"Theme"* ]]
   [[ "$output" == *"Update"* ]]
   [[ "$output" == *"Doctor"* ]]
+  [[ "$output" == *"Wallpaper"* ]]
   [[ "$output" == *"Quit"* ]]
 }
 
