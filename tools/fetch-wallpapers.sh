@@ -17,8 +17,14 @@ MANIFEST="$REPO/tools/wallpapers.manifest"
 # shellcheck source=lib/common.sh
 source "$REPO/lib/common.sh"
 
-command -v sips >/dev/null 2>&1 || { fail "sips not found (macOS only)"; exit 1; }
-command -v curl >/dev/null 2>&1 || { fail "curl not found"; exit 1; }
+command -v sips >/dev/null 2>&1 || {
+  fail "sips not found (macOS only)"
+  exit 1
+}
+command -v curl >/dev/null 2>&1 || {
+  fail "curl not found"
+  exit 1
+}
 
 PASS=0
 FAIL=0
@@ -42,8 +48,8 @@ while IFS='|' read -r theme url artwork _license; do
   trap 'rm -f "$tmp"' EXIT INT TERM
 
   if ! curl -fsSL --max-time 120 \
-      -H "User-Agent: OmacOS/1.1 (https://github.com/igorjs/omacos; igor@getdigital.com.br)" \
-      -o "$tmp" "$url"; then
+    -H "User-Agent: OmacOS/1.1 (https://github.com/igorjs/omacos; igor@getdigital.com.br)" \
+    -o "$tmp" "$url"; then
     fail "  curl failed for $theme ($url)"
     FAIL=$((FAIL + 1))
     rm -f "$tmp"
@@ -54,7 +60,7 @@ while IFS='|' read -r theme url artwork _license; do
   # Verify the downloaded file is an image type sips can handle.
   mime="$(file --mime-type -b "$tmp" 2>/dev/null || true)"
   case "$mime" in
-    image/jpeg|image/png|image/tiff|image/gif|image/bmp|image/heic)
+    image/jpeg | image/png | image/tiff | image/gif | image/bmp | image/heic)
       ;;
     *)
       fail "  MIME type '$mime' not supported by sips for $theme"
@@ -93,7 +99,7 @@ while IFS='|' read -r theme url artwork _license; do
     continue
   fi
 
-  size_kb=$(( $(stat -f%z "$out" 2>/dev/null || stat -c%s "$out" 2>/dev/null || echo 0) / 1024 ))
+  size_kb=$(($(stat -f%z "$out" 2>/dev/null || stat -c%s "$out" 2>/dev/null || echo 0) / 1024))
   ok "  $theme -> $out (${size_kb}KB)"
   PASS=$((PASS + 1))
   rm -f "$tmp"
