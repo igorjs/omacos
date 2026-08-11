@@ -9,13 +9,27 @@ setup() {
   export OMACOS_ROOT="$REPO"
 }
 
-@test "theme_parity: each theme ships the 6 required app-level files" {
+@test "theme_parity: each theme ships all required app-level files" {
   for d in "$OMACOS_ROOT/themes"/*/; do
     [[ -d "$d" ]] || continue
     name="$(basename "$d")"
     for f in ghostty.conf tmux.conf starship.toml zsh.zsh nvim.lua zed.json; do
       [[ -f "$d/$f" ]] || { echo "MISSING: $name/$f"; false; }
     done
+  done
+}
+
+@test "theme_parity: any bundled wallpaper.jpg is a valid JPEG" {
+  # Wallpaper is optional per theme (see README, "Add a new theme"): a theme may
+  # ship none and omacos degrades gracefully. But when present it must be a
+  # non-empty, valid JPEG, so a broken or placeholder asset can't slip through.
+  for d in "$OMACOS_ROOT/themes"/*/; do
+    [[ -d "$d" ]] || continue
+    name="$(basename "$d")"
+    wp="$d/wallpaper.jpg"
+    [[ -e "$wp" ]] || continue
+    [[ -s "$wp" ]] || { echo "EMPTY: $name/wallpaper.jpg"; false; }
+    file --brief "$wp" | grep -qi jpeg || { echo "NOT A JPEG: $name/wallpaper.jpg"; false; }
   done
 }
 
