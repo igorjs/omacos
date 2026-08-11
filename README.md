@@ -198,19 +198,19 @@ Under `auto` mode, `omacos update` re-applies the current theme's wallpaper as p
 
 ### Provenance
 
-All bundled wallpapers are public domain (pre-1929 or explicitly PD).
+All bundled wallpapers are public domain (pre-1929 or explicitly PD) or released under CC0.
 
 | Theme | Artwork | License |
 |-------|---------|---------|
-| `tokyonight` | Vincent van Gogh, The Starry Night (1889) | Public Domain |
+| `tokyonight` | Kobayashi Kiyochika, The Sumida River at Night (1881) | Public Domain |
 | `kanagawa` | Katsushika Hokusai, The Great Wave off Kanagawa (c.1831) | Public Domain |
-| `nord` | Caspar David Friedrich, Das Eismeer / The Sea of Ice (1823) | Public Domain |
-| `everforest` | Ivan Shishkin, Morning in a Pine Forest (1889) | Public Domain |
+| `nord` | Harald Sohlberg, Winter Night in the Mountains (1914) | Public Domain |
+| `everforest` | Aerial view of a forest, Maria Mekht (2016) | CC0 |
 | `gruvbox` | Isaac Levitan, Golden Autumn (1895) | Public Domain |
 | `rose-pine` | Henri Fantin-Latour, Roses de Nice on a Table (1882) | Public Domain |
-| `catppuccin` | Claude Monet, Water Lilies / Water Landscape (1908) | Public Domain |
+| `catppuccin` | Vincent van Gogh, Cafe Terrace at Night (1888) | Public Domain |
 | `ristretto` | Pieter Claesz, Breakfast (1646) | Public Domain |
-| `osaka-jade` | Utagawa Hiroshige, The Lake at Hakone (Tokaido series, Station 10), c.1832-1834 | Public Domain |
+| `osaka-jade` | Utagawa Hiroshige, Ships Arriving at Hachikenya, Osaka (1834) | Public Domain |
 | `matte-black` | James McNeill Whistler, Nocturne: Blue and Gold, Southampton Water (1872) | Public Domain |
 
 ---
