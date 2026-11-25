@@ -21,10 +21,7 @@ TPM_DIR="$HOME/.tmux/plugins/tpm"
 
 # --- 1. TPM -----------------------------------------------------------------
 if [[ -d "$TPM_DIR/.git" ]]; then
-  info "TPM already cloned at $TPM_DIR — pulling latest"
-  git -C "$TPM_DIR" pull --quiet --ff-only 2>/dev/null ||
-    warn "Could not pull TPM updates (continuing with existing version)"
-  ok "TPM ready"
+  ok "TPM already cloned at $TPM_DIR"
 else
   info "Cloning TPM into $TPM_DIR"
   mkdir -p "$HOME/.tmux/plugins"
@@ -48,5 +45,27 @@ else
   warn "TPM install_plugins.sh not found at $install_script"
 fi
 
-note "In a running tmux session, hit  prefix + I  to re-install / refresh plugins."
+# --- 3. Pin ------------------------------------------------------------------
+# Plugins run unreviewed code inside every shell session. Check out fixed
+# commits so a fresh install or prefix + U cannot pull in a new upstream head.
+# To upgrade, review the upstream diff and change the SHA here.
+PINNED_PLUGINS=(
+  "tpm e261deb1b47614eed3400089ce7197dc68acc4eb"
+  "tmux-resurrect cff343cf9e81983d3da0c8562b01616f12e8d548"
+  "tmux-continuum 0698e8f4b17d6454c71bf5212895ec055c578da0"
+)
+for entry in "${PINNED_PLUGINS[@]}"; do
+  read -r plugin sha <<<"$entry"
+  plugin_dir="$HOME/.tmux/plugins/$plugin"
+  [[ -d "$plugin_dir/.git" ]] || continue
+  if git -C "$plugin_dir" cat-file -e "$sha^{commit}" 2>/dev/null ||
+    git -C "$plugin_dir" fetch --quiet origin "$sha" 2>/dev/null; then
+    git -C "$plugin_dir" checkout --quiet --detach "$sha"
+    ok "$plugin pinned at ${sha:0:7}"
+  else
+    warn "Could not fetch $plugin at $sha (left unpinned)"
+  fi
+done
+
+note "In a running tmux session, hit  prefix + I  to install new plugins. Plugins are pinned, so  prefix + U  does not upgrade them."
 note "Hit  prefix + Ctrl-s  to manually save state,  prefix + Ctrl-r  to restore."
